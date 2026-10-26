@@ -4,10 +4,14 @@
 // on the right. Wording after King Kong Recompiled's "Your copy of the game" page.
 
 #include <algorithm>
+#include <atomic>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <mutex>
 #include <string>
+#include <thread>
 
 #include <SDL_syswm.h>
 #if defined(_WIN32)
@@ -24,23 +28,92 @@ namespace {
 
 using namespace dash;
 
-// The Windows file picker for .iso files, owned by the launcher window so it always opens on top of it.
-std::string BrowseForDisc(SDL_Window* owner, const std::string& title) {
+// The Windows file picker for .iso files. It runs on a thread of its own, so the launcher keeps drawing while it is
+// open (the picker on the main thread froze the launcher, and when the picker opened behind another window there was
+// nothing to see or click). It belongs to the launcher window, and is brought to the front as soon as it appears and
+// again whenever the player asks.
+struct Picker {
+  std::mutex mu;
+  bool open = false, done = false;
+  int game = -1;
+  std::string path;  // the chosen file; empty when cancelled
 #if defined(_WIN32)
-  SDL_SysWMinfo wm;
-  SDL_VERSION(&wm.version);
-  HWND hwnd = SDL_GetWindowWMInfo(owner, &wm) ? wm.info.win.window : nullptr;
+  HWND dialog = nullptr;  // the picker's window, once it is showing
+#endif
+};
+Picker g_picker;
+
+#if defined(_WIN32)
+// BK_TEST_BACKGROUND=1 (test runs) leaves it where it opens, as the games' windows do.
+void BringToFront(HWND w) {
+  static const bool test_background = std::getenv("BK_TEST_BACKGROUND") != nullptr;
+  if (!w || test_background) return;
+  SetWindowPos(w, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+  SetWindowPos(w, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+  SetForegroundWindow(w);
+}
+
+// Learns the picker's window when it first shows a folder, and brings it to the front.
+class PickerEvents : public IFileDialogEvents {
+ public:
+  IFACEMETHODIMP QueryInterface(REFIID riid, void** out) override {
+    if (riid == IID_IUnknown || riid == __uuidof(IFileDialogEvents)) {
+      *out = static_cast<IFileDialogEvents*>(this);
+      AddRef();
+      return S_OK;
+    }
+    *out = nullptr;
+    return E_NOINTERFACE;
+  }
+  IFACEMETHODIMP_(ULONG) AddRef() override { return ++refs_; }
+  IFACEMETHODIMP_(ULONG) Release() override {
+    const ULONG n = --refs_;
+    if (!n) delete this;
+    return n;
+  }
+  IFACEMETHODIMP OnFolderChange(IFileDialog* dlg) override {
+    IOleWindow* ole = nullptr;
+    if (SUCCEEDED(dlg->QueryInterface(IID_PPV_ARGS(&ole)))) {
+      HWND w = nullptr;
+      if (SUCCEEDED(ole->GetWindow(&w)) && w) {
+        bool first = false;
+        {
+          std::lock_guard<std::mutex> lock(g_picker.mu);
+          first = !g_picker.dialog;
+          g_picker.dialog = w;
+        }
+        if (first) BringToFront(w);
+      }
+      ole->Release();
+    }
+    return S_OK;
+  }
+  IFACEMETHODIMP OnFileOk(IFileDialog*) override { return S_OK; }
+  IFACEMETHODIMP OnFolderChanging(IFileDialog*, IShellItem*) override { return S_OK; }
+  IFACEMETHODIMP OnSelectionChange(IFileDialog*) override { return S_OK; }
+  IFACEMETHODIMP OnShareViolation(IFileDialog*, IShellItem*, FDE_SHAREVIOLATION_RESPONSE*) override { return S_OK; }
+  IFACEMETHODIMP OnTypeChange(IFileDialog*) override { return S_OK; }
+  IFACEMETHODIMP OnOverwrite(IFileDialog*, IShellItem*, FDE_OVERWRITE_RESPONSE*) override { return S_OK; }
+
+ private:
+  std::atomic<ULONG> refs_{1};
+};
+
+std::string ShowPicker(HWND owner, const std::wstring& title) {
   const HRESULT co = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
   std::string out;
   IFileOpenDialog* dlg = nullptr;
   if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg)))) {
     const COMDLG_FILTERSPEC filter[] = {{L"Xbox 360 disc images (*.iso)", L"*.iso"}, {L"All files", L"*.*"}};
     dlg->SetFileTypes(2, filter);
-    const int n = MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, nullptr, 0);
-    std::wstring wtitle(size_t(std::max(n, 1)), L'\0');
-    MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, wtitle.data(), n);
-    dlg->SetTitle(wtitle.c_str());
-    if (SUCCEEDED(dlg->Show(hwnd))) {
+    dlg->SetTitle(title.c_str());
+    FILEOPENDIALOGOPTIONS opts = 0;
+    if (SUCCEEDED(dlg->GetOptions(&opts)))
+      dlg->SetOptions(opts | FOS_FORCEFILESYSTEM | FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR);
+    PickerEvents* events = new PickerEvents();
+    DWORD cookie = 0;
+    const bool advised = SUCCEEDED(dlg->Advise(events, &cookie));
+    if (SUCCEEDED(dlg->Show(owner))) {
       IShellItem* item = nullptr;
       if (SUCCEEDED(dlg->GetResult(&item))) {
         PWSTR path = nullptr;
@@ -54,13 +127,66 @@ std::string BrowseForDisc(SDL_Window* owner, const std::string& title) {
         item->Release();
       }
     }
+    if (advised) dlg->Unadvise(cookie);
+    events->Release();
     dlg->Release();
   }
   if (SUCCEEDED(co)) CoUninitialize();
   return out;
+}
+#endif
+
+void OpenPicker(SDL_Window* owner, int game, const std::string& title) {
+  {
+    std::lock_guard<std::mutex> lock(g_picker.mu);
+    if (g_picker.open) return;
+    g_picker.open = true;
+    g_picker.done = false;
+    g_picker.game = game;
+    g_picker.path.clear();
+#if defined(_WIN32)
+    g_picker.dialog = nullptr;
+#endif
+  }
+#if defined(_WIN32)
+  SDL_SysWMinfo wm;
+  SDL_VERSION(&wm.version);
+  HWND hwnd = SDL_GetWindowWMInfo(owner, &wm) ? wm.info.win.window : nullptr;
+  const int n = MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, nullptr, 0);
+  std::wstring wtitle(size_t(std::max(n, 1)), L'\0');
+  MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, wtitle.data(), n);
+  wtitle.resize(wcslen(wtitle.c_str()));
+  std::thread([hwnd, wtitle] {
+    std::string path = ShowPicker(hwnd, wtitle);
+    std::lock_guard<std::mutex> lock(g_picker.mu);
+    g_picker.path = std::move(path);
+    g_picker.open = false;
+    g_picker.done = true;
+    g_picker.dialog = nullptr;
+  }).detach();
 #else
   (void)owner;
-  return trg::BrowseForFile(title, {{"Xbox 360 disc images", "*.iso"}});
+  std::string path = trg::BrowseForFile(title, {{"Xbox 360 disc images", "*.iso"}});
+  std::lock_guard<std::mutex> lock(g_picker.mu);
+  g_picker.path = std::move(path);
+  g_picker.open = false;
+  g_picker.done = true;
+#endif
+}
+
+bool PickerOpen() {
+  std::lock_guard<std::mutex> lock(g_picker.mu);
+  return g_picker.open;
+}
+
+void PickerToFront() {
+#if defined(_WIN32)
+  HWND w = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(g_picker.mu);
+    w = g_picker.dialog;
+  }
+  BringToFront(w);
 #endif
 }
 
@@ -110,6 +236,20 @@ void DrawInstall(App& app, int g) {
   const GameInfo& game = Games()[g];
   GameUi& u = app.game_ui(g);
 
+  // The file picker's answer (it may come after the player has left this screen).
+  {
+    std::unique_lock<std::mutex> lock(g_picker.mu);
+    if (g_picker.done) {
+      g_picker.done = false;
+      const int pg = g_picker.game;
+      const std::string file = g_picker.path;
+      lock.unlock();
+      if (!file.empty() && pg >= 0 && pg < kGameCount) {
+        app.game_ui(pg).disc_path = file;
+        StartDiscInstall(Games()[pg], file, app.game_ui(pg).jobs);
+      }
+    }
+  }
   if (PollJobs(game, u.jobs)) {
     app.RefreshStates();
     if (!u.jobs.message_is_error && u.jobs.message != "Cancelled.") {
@@ -158,12 +298,12 @@ void DrawInstall(App& app, int g) {
                                                              : "Still looking for others...");
       else if (app.discs().Found(game.title_id).empty())
         r.Paragraph("No disc image of this game was found on this PC. Choose it yourself below.");
-      if (r.Button("Choose disc image", "Pick the .iso file, or drop it on this window.")) {
-        const std::string file = BrowseForDisc(app.window(), "Choose your " + std::string(game.title) + " disc image");
-        if (!file.empty()) {
-          u.disc_path = file;
-          StartDiscInstall(game, file, u.jobs);
-        }
+      if (PickerOpen()) {
+        r.Paragraph("Choose your disc image in the file window that opened.");
+        if (r.Button("Show the file window", "Brings the file window to the front, in case it opened behind."))
+          PickerToFront();
+      } else if (r.Button("Choose disc image", "Pick the .iso file, or drop it on this window.")) {
+        OpenPicker(app.window(), g, "Choose your " + std::string(game.title) + " disc image");
       }
       if (!app.discs().running() && r.Button("Search again", "Looks through this PC for disc images again."))
         app.discs().Rescan();
