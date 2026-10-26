@@ -64,6 +64,9 @@ int ScaleFor(std::string_view mode, int output_height) {
 }  // namespace
 
 void ApplyRenderQuality(rex::ui::Window* window) {
+  // FXAA on by default. Set here, before the GPU starts: the command processor reads swap_post_effect once when it
+  // is created, so the default set later in ApplyPortDefaults never took effect.
+  SetCvarDefault("swap_post_effect", "fxaa");
   // The guest video mode: always 1280 x 720. The default becomes 0 so that 1280 counts as set and wins over a
   // window size (HasNonDefaultValue compares with the default).
   for (const char* name : {"video_mode_width", "video_mode_height"}) SetCvarDefault(name, "0");

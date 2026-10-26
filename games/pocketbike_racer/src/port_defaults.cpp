@@ -1,7 +1,8 @@
 // The collection's defaults (they change only the default, so the
 // settings file the launcher writes and the command line still win). GPU plugin settings exist only once the plugin is loaded, so this
 // runs in OnPostSetup.
-//   swap_post_effect = fxaa   anti aliasing on by default
+//   swap_post_effect = fxaa   anti aliasing on by default (it takes effect from render_quality.cpp, set before
+//                             the GPU starts; this one only keeps the settings file in step)
 //   render_target_path_vulkan = fbo   Linux: host render targets (faster on handheld graphics)
 //   readback_resolve = fast   the washed out tracks (see ApplyPortDefaults)
 // Fullscreen stays the SDK's default (on).
