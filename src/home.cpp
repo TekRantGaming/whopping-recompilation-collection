@@ -1,7 +1,7 @@
 // The home screen, after the Xbox Series dashboard: the focused game's art
 // fills the window, its logo and status sit on the left, and the games are a
 // row of tiles along the bottom, then Other TRG Projects (a fourth "game" that
-// opens the other TekRant Gaming projects), Settings and Exit.
+// opens the other TekRant Gaming projects), Add to Steam, Discord, Settings and Exit.
 //
 // A opens the focused game's page (the only place with Play); LB and RB move between the
 // games. The mouse focuses a tile by pointing at it and clicking does what A does.
@@ -19,14 +19,14 @@ namespace {
 
 using namespace dash;
 
-constexpr int kProjectsTile = kGameCount, kSettingsTile = kGameCount + 1, kExitTile = kGameCount + 2,
-              kTiles = kGameCount + 3;
+constexpr int kProjectsTile = kGameCount, kSteamTile = kGameCount + 1, kDiscordTile = kGameCount + 2,
+              kSettingsTile = kGameCount + 3, kExitTile = kGameCount + 4, kTiles = kGameCount + 5;
 
 struct HomeState {
   int focus = 0;  // tile with the focus
   int shown = 0;  // whose art and text are shown: a game, or kProjectsTile (the last focused of them)
   float fade[kGameCount + 1] = {1.0f, 0.0f, 0.0f, 0.0f};
-  float grow[kTiles] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+  float grow[kTiles] = {1.0f};
 };
 HomeState home;
 
@@ -79,13 +79,23 @@ void DrawTile(App& app, int i, ImVec2 a, ImVec2 b, bool focused) {
   if (focused) FocusRing(a, b, 8);
 }
 
-void DrawUtilityTile(ImVec2 a, ImVec2 b, const char* label, int icon, bool focused) {
+// Settings, Exit, and the Steam and Discord buttons: those two show their brand's mark on its colour.
+void DrawUtilityTile(ImVec2 a, ImVec2 b, const std::string& label, int icon, bool focused, const Texture* mark = nullptr,
+                     ImU32 colour = 0) {
   const Frame& f = F();
   ImDrawList* dl = f.dl;
-  dl->AddRectFilled(a, b, Hover(a, b) ? White(0.16f) : White(0.09f), 8 * f.s);
+  if (colour) {
+    dl->AddRectFilled(a, b, colour, 8 * f.s);
+    if (Hover(a, b)) dl->AddRectFilled(a, b, White(0.08f), 8 * f.s);
+  } else {
+    dl->AddRectFilled(a, b, Hover(a, b) ? White(0.16f) : White(0.09f), 8 * f.s);
+  }
   const ImVec2 c((a.x + b.x) * 0.5f, a.y + (b.y - a.y) * 0.42f);
   const float r = 14 * f.s, w = 1.8f * f.s;
-  if (icon == 0) {  // settings: three sliders
+  if (mark && *mark) {
+    const float m = 17 * f.s;
+    dl->AddImage(ImTextureRef(mark->id), ImVec2(c.x - m, c.y - m), ImVec2(c.x + m, c.y + m));
+  } else if (icon == 0) {  // settings: three sliders
     for (int k = -1; k <= 1; ++k) {
       const float y = c.y + k * 9 * f.s;
       dl->AddLine(ImVec2(c.x - r, y), ImVec2(c.x + r, y), White(0.85f), w);
@@ -96,8 +106,8 @@ void DrawUtilityTile(ImVec2 a, ImVec2 b, const char* label, int icon, bool focus
     dl->PathStroke(White(0.85f), 0, w);
     dl->AddLine(ImVec2(c.x, c.y - r), ImVec2(c.x, c.y - 2 * f.s), White(0.85f), w);
   }
-  const ImVec2 t = TextSize(f.regular, 14, label);
-  Text(f.regular, 14, ImVec2(c.x - t.x * 0.5f, b.y - (b.y - a.y) * 0.3f), White(0.88f), label);
+  const ImVec2 t = TextSize(f.regular, 13, label, (b.x - a.x) / f.s - 12);
+  Text(f.regular, 13, ImVec2(c.x - t.x * 0.5f, b.y - (b.y - a.y) * 0.3f), White(0.9f), label, (b.x - a.x) / f.s - 12);
   if (focused) FocusRing(a, b, 8);
 }
 
@@ -127,6 +137,8 @@ void DrawProjectsTile(App& app, ImVec2 a, ImVec2 b, bool focused) {
 void Activate(App& app, int tile) {
   if (tile < kGameCount) app.OpenHub(tile);
   else if (tile == kProjectsTile) app.OpenProjects();
+  else if (tile == kSteamTile) app.SteamPressed();
+  else if (tile == kDiscordTile) app.OpenDiscord();
   else if (tile == kSettingsTile) app.OpenCollection();
   else app.Quit();
 }
@@ -238,19 +250,23 @@ void DrawHome(App& app) {
     if (t <= kProjectsTile) {
       w = (132 + 28 * home.grow[t]) * f.s;
       h = w * 1.5f;
-    } else {
-      if (t == kSettingsTile) x += 22 * f.s;
-      w = h = (124 + 12 * home.grow[t]) * f.s;
+    } else {  // the four buttons, square
+      if (t == kSteamTile) x += 22 * f.s;
+      w = h = (104 + 10 * home.grow[t]) * f.s;
     }
     const ImVec2 a(x, bottom - h), b(x + w, bottom);
     if (t < kGameCount)
       DrawTile(app, t, a, b, t == home.focus);
     else if (t == kProjectsTile)
       DrawProjectsTile(app, a, b, t == home.focus);
+    else if (t == kSteamTile)
+      DrawUtilityTile(a, b, app.SteamLabel(), -1, t == home.focus, &app.steam_icon(), IM_COL32(27, 40, 56, 255));
+    else if (t == kDiscordTile)
+      DrawUtilityTile(a, b, "Discord", -1, t == home.focus, &app.discord_icon(), IM_COL32(88, 101, 242, 255));
     else
       DrawUtilityTile(a, b, t == kSettingsTile ? "Settings" : "Exit", t == kSettingsTile ? 0 : 1, t == home.focus);
     if (Hover(a, b)) hovered = t;
-    x += w + 16 * f.s;
+    x += w + (t > kProjectsTile ? 12 : 16) * f.s;
   }
   if (hovered >= 0 && MouseMoved() && home.focus != hovered) {
     home.focus = hovered;

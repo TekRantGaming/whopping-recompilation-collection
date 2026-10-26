@@ -8,6 +8,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <memory>
 #include <string>
 
@@ -26,6 +27,7 @@
 #include "install.h"
 #include "projects.h"
 #include "saves.h"
+#include "steam_shortcut.h"
 
 namespace whopping {
 
@@ -113,7 +115,26 @@ class App {
   SettingsView& collection_view() { return collection_view_; }
   SDL_Window* window() const { return window_; }
 
+  // Home's Discord and Steam buttons (steam_button.cpp): their marks, and Add to Steam as in King Kong
+  // Recompiled (steam_shortcut.h).
+  const Texture& discord_icon() const { return discord_icon_; }
+  const Texture& steam_icon() const { return steam_icon_; }
+  void OpenDiscord();
+  void SteamPressed();             // adds the launcher to Steam, or opens Steam when it's there already
+  std::string SteamLabel() const;  // what the button says
+
  private:
+  struct SteamState {
+    std::atomic<bool> checked{false};     // the check below has finished
+    std::atomic<bool> available{false};   // Steam is installed and someone has signed in to it
+    std::atomic<bool> in_library{false};  // this launcher is in the library (or was started from Steam)
+    std::atomic<bool> busy{false}, done{false};
+    std::atomic<int> phase{0};  // kSteamPhases
+    steam::Result result;       // read once done
+  };
+  void StartSteamCheck();
+  void StartAddToSteam();
+  void TickSteam();
   enum class View { kHome, kHub, kSettings, kInstall, kCollection, kProjects };
   bool Launch(const std::string& exe, const std::string& dir, const std::wstring& args, const std::string& title,
               int index);
@@ -135,6 +156,8 @@ class App {
   trg::UpdaterConfig self_updater_;
   trg::UpdatesState self_updates_;
   SettingsView collection_view_;
+  Texture discord_icon_, steam_icon_;
+  std::shared_ptr<SteamState> steam_;
   // The running game.
   void* process_ = nullptr;
   int running_game_ = -1;

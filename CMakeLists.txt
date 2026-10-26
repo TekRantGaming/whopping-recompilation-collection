@@ -47,6 +47,8 @@ add_executable(whopping_launcher WIN32
   src/projects_screen.cpp
   src/settings_screen.cpp
   src/sounds.cpp
+  src/steam_button.cpp
+  src/steam_shortcut.cpp
   src/whopping.rc)
 target_include_directories(whopping_launcher PRIVATE src ${stb_SOURCE_DIR})
 target_link_libraries(whopping_launcher PRIVATE trg::launcher_standalone)
@@ -55,4 +57,6 @@ if(MSVC)
   target_compile_definitions(whopping_launcher PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX WIN32_LEAN_AND_MEAN)
   target_link_options(whopping_launcher PRIVATE /MAP /ENTRY:mainCRTStartup)
 endif()
-target_compile_definitions(whopping_launcher PRIVATE WHOPPING_VERSION="${PROJECT_VERSION}")
+# Also the exe's file version (whopping.rc).
+target_compile_definitions(whopping_launcher PRIVATE WHOPPING_VERSION="${PROJECT_VERSION}"
+  WHOPPING_VERSION_COMMAS=${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)

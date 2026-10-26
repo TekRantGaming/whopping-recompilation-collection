@@ -35,6 +35,7 @@
 | 🎮 **Any controller**, or keyboard and mouse with your own keys | 🏆 **Achievements** with notifications in game, 12 per game | ↩️ **Back to the launcher** any time: hold Back + Start, or Esc |
 | 💿 **Install from your own discs**, found on your PC by themselves | 🔄 **Updates itself** and every game | 💾 **Save backups** and restore in one click |
 | 🛋️ **A console style dashboard** with sounds, made for a controller | 🪟 **Borderless fullscreen**, windowed, any monitor | 🦍 **Other TRG Projects**, with King Kong Recompiled ready to install |
+| 🚂 **Add to Steam** with its own artwork, ready for Big Picture and the Steam Deck | 💬 **[Join the Discord](https://discord.gg/8eakYSvBZS)** right from Home | |
 
 <div align="center">
 
@@ -117,6 +118,8 @@ Everything is set up before a game starts, with a controller, the keyboard or th
 - **All three games** side by side, with their box art and artwork
 - Each game shows at a glance whether it's **ready to play**, its version and your **achievements**
 - **Settings** for the launcher, and **Other TRG Projects**
+- **Add to Steam**: adds the collection to your Steam library as a non Steam game, with its own artwork (cover, banner, header, logo and icon), and switches Steam Input off for it so your controller keeps working. Steam closes for a moment while it's added and opens again afterwards; once it's in your library the button opens Steam instead
+- **Discord**: joins the official server
 - Plays with a **controller**, the **keyboard** or the **mouse**, with interface sounds
 
 </td>
@@ -243,10 +246,11 @@ See [BUILDING.md](BUILDING.md). The game code is generated from each game's own 
 - [**Dear ImGui**](https://github.com/ocornut/imgui), [**SDL**](https://www.libsdl.org) and [**stb**](https://github.com/nothings/stb) for the launcher.
 - The [**TRG Launcher**](https://github.com/TekRantGaming/trg-launcher) (updater and settings), shared by the TekRant Gaming ports.
 - Game artwork in the launcher from [**SteamGridDB**](https://www.steamgriddb.com), downloaded when the launcher runs.
+- The Discord and Steam marks from [**Simple Icons**](https://simpleicons.org) (CC0). Discord and Steam are trademarks of their owners.
 - Upscaling: [**AMD FidelityFX Super Resolution 1**](https://github.com/GPUOpen-Effects/FidelityFX-FSR) and the [**NVIDIA Image Scaling SDK**](https://github.com/NVIDIAGameWorks/NVIDIAImageScaling), both MIT licensed.
 
 > [!NOTE]
 > **AI disclosure:** this collection was made almost entirely with Claude Code (Anthropic). The repository owner directed and tested the work; the AI did the analysis, code, tools and documentation.
 
 > [!IMPORTANT]
-> This project is not affiliated with or endorsed by Burger King, Blitz Games, King Games or Microsoft. All trademarks belong to their owners. It contains no game code or assets. Do not open issues asking for game files.
+> This project is not affiliated with or endorsed by Burger King, Blitz Games, King Games, Microsoft, Valve or Discord. All trademarks belong to their owners. It contains no game code or assets. Do not open issues asking for game files.

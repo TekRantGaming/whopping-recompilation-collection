@@ -1,6 +1,8 @@
 #include "app.h"
 
+#include "discord_icon.inc"
 #include "logo_png.h"
+#include "steam_icon.inc"
 #include "sounds.h"
 
 #include <filesystem>
@@ -51,6 +53,16 @@ void App::Start() {
     const std::string png(reinterpret_cast<const char*>(kWhoppingLogoPng), sizeof kWhoppingLogoPng);
     if (DecodeImage(png, w, h, rgba)) logo_ = upload_(w, h, rgba.data());
   }
+  {  // the brand marks, white with their alpha, tinted when drawn
+    auto mark = [this](const unsigned char* mask, int size) {
+      std::vector<unsigned char> rgba(size_t(size) * size * 4, 255);
+      for (int i = 0; i < size * size; ++i) rgba[size_t(i) * 4 + 3] = mask[i];
+      return upload_(size, size, rgba.data());
+    };
+    discord_icon_ = mark(kDiscordIcon, kDiscordIconSize);
+    steam_icon_ = mark(kSteamIcon, kSteamIconSize);
+  }
+  StartSteamCheck();
   projects_ = std::make_unique<Projects>(upload_, !options_.offline);
   projects_->Start();
 
@@ -367,6 +379,7 @@ bool App::Frame() {
     return false;
   }
   art_->Poll();
+  TickSteam();
   projects_->Poll();
   for (int i = 0; i < kGameCount; ++i) PollManage(i);
   if (view_ != drawn_view_) {
