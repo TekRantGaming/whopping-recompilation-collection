@@ -1,4 +1,4 @@
-// Other TRG Projects: the other TekRant Gaming ports, as on King Kong Recompiled's
+// Other TRG Projects: the other TekRantGaming ports, as on King Kong Recompiled's
 // Workshop page. Each project shows its
 // SteamGridDB art and its GitHub description, stars and last update, cached
 // in cache/projects and read again at most once a day. Download opens the

@@ -12,7 +12,7 @@ One repo holds the launcher and the three games:
 ## Requirements
 
 * Visual Studio 2022 with the C++ tools (the games build with its LLVM clang), CMake 3.25+, Ninja, Python 3.
-* The ReXGlue SDK with TekRant Gaming's patches (FSR 1 and NIS among them), installed to an install prefix. Link it
+* The ReXGlue SDK with TekRantGaming's patches (FSR 1 and NIS among them), installed to an install prefix. Link it
   as `tools/rexglue/win-amd64` (a junction to the SDK's `out/install/win-amd64`).
 
 ## The launcher

@@ -10,7 +10,7 @@ BEGIN
   BEGIN
     BLOCK "080904B0"
     BEGIN
-      VALUE "CompanyName", "TekRant Gaming"
+      VALUE "CompanyName", "TekRantGaming"
       VALUE "FileDescription", "The Whopping Recompilation Collection"
       VALUE "FileVersion", WHOPPING_VERSION
       VALUE "ProductName", "The Whopping Recompilation Collection"

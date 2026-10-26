@@ -1,7 +1,7 @@
 // The home screen, after the Xbox Series dashboard: the focused game's art
 // fills the window, its logo and status sit on the left, and the games are a
 // row of tiles along the bottom, then Other TRG Projects (a fourth "game" that
-// opens the other TekRant Gaming projects), Add to Steam, Discord, Settings and Exit.
+// opens the other TekRantGaming projects), Add to Steam, Discord, Settings and Exit.
 //
 // A opens the focused game's page (the only place with Play); LB and RB move between the
 // games. The mouse focuses a tile by pointing at it and clicking does what A does.
@@ -200,7 +200,7 @@ void DrawHome(App& app) {
     Text(f.bold, 48, ImVec2(f.X(48), y), White(), "Other TRG Projects");
     y += 70 * f.s;
     const std::string line = std::to_string(app.projects().list().size()) +
-                             " more ports from TekRant Gaming."
+                             " more ports from TekRantGaming."
 #if defined(_WIN32)
                              " King Kong Recompiled installs right here."
 #endif

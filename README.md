@@ -195,7 +195,7 @@ Everything is set up before a game starts, with a controller, the keyboard or th
 <td valign="middle">
 
 ### Other TRG Projects
-- The other **TekRant Gaming** ports, with their artwork and a link to each
+- The other **TekRantGaming** ports, with their artwork and a link to each
 - **King Kong Recompiled** downloads and plays right from here
 
 </td>
@@ -251,7 +251,7 @@ See [BUILDING.md](BUILDING.md). The game code is generated from each game's own 
 - **Sneak King**, **Big Bumpin'** and **PocketBike Racer** by Blitz Games (Blitz Arcade), published by King Games in 2006.
 - [**ReXGlue SDK**](https://github.com/rexglue/rexglue-sdk), which does the code translation and runs the games, built on the work of [**Xenia**](https://github.com/xenia-project/xenia) and [**XenonRecomp**](https://github.com/hedge-dev/XenonRecomp).
 - [**Dear ImGui**](https://github.com/ocornut/imgui), [**SDL**](https://www.libsdl.org) and [**stb**](https://github.com/nothings/stb) for the launcher.
-- The [**TRG Launcher**](https://github.com/TekRantGaming/trg-launcher) (updater and settings), shared by the TekRant Gaming ports.
+- The [**TRG Launcher**](https://github.com/TekRantGaming/trg-launcher) (updater and settings), shared by the TekRantGaming ports.
 - Game artwork in the launcher from [**SteamGridDB**](https://www.steamgriddb.com), downloaded when the launcher runs.
 - The Discord and Steam marks from [**Simple Icons**](https://simpleicons.org) (CC0). Discord and Steam are trademarks of their owners.
 - Upscaling: [**AMD FidelityFX Super Resolution 1**](https://github.com/GPUOpen-Effects/FidelityFX-FSR) and the [**NVIDIA Image Scaling SDK**](https://github.com/NVIDIAGameWorks/NVIDIAImageScaling), both MIT licensed.
