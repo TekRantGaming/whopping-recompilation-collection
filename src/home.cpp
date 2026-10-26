@@ -166,7 +166,9 @@ void DrawHome(App& app) {
   Backdrop(app.projects().info(0).hero, home.fade[kGameCount], 0.6f);  // King Kong for Other TRG Projects
   Shade();
   if (TopBar({}, true)) app.OpenCollection();
-  // The collection's wordmark, centred at the top, and its line .
+  // A soft dark band at the top keeps the wordmark, its line and the clock readable over bright art.
+  f.dl->AddRectFilledMultiColor(f.o, ImVec2(f.end.x, f.Y(250)), Black(0.72f), Black(0.72f), Black(0.0f), Black(0.0f));
+  // The collection's wordmark, centred at the top, and its line.
   if (const Texture& logo = app.logo()) {
     const float w = 330 * f.s, h = w * float(logo.height) / float(logo.width);
     const float x = f.o.x + (f.size.x - w) * 0.5f, y = f.Y(4);
