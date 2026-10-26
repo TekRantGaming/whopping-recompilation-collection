@@ -17,12 +17,14 @@
         },
         { "name": "bk-debug",          "inherits": ["win-amd64-debug",          "user-env"] },
         { "name": "bk-release",        "inherits": ["win-amd64-release",        "user-env"] },
-        { "name": "bk-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] }
+        { "name": "bk-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] },
+        { "name": "bk-linux-release",  "inherits": ["linux-amd64-release",      "user-env-linux"] }
     ],
     "buildPresets": [
         { "name": "bk-debug",          "configurePreset": "bk-debug" },
         { "name": "bk-release",        "configurePreset": "bk-release" },
-        { "name": "bk-relwithdebinfo", "configurePreset": "bk-relwithdebinfo" }
+        { "name": "bk-relwithdebinfo", "configurePreset": "bk-relwithdebinfo" },
+        { "name": "bk-linux-release",  "configurePreset": "bk-linux-release" }
     ]
 }
 

@@ -200,7 +200,11 @@ void DrawHome(App& app) {
     Text(f.bold, 48, ImVec2(f.X(48), y), White(), "Other TRG Projects");
     y += 70 * f.s;
     const std::string line = std::to_string(app.projects().list().size()) +
-                             " more ports from TekRant Gaming. King Kong Recompiled installs right here.";
+                             " more ports from TekRant Gaming."
+#if defined(_WIN32)
+                             " King Kong Recompiled installs right here."
+#endif
+                             ;
     Text(f.regular, 16, ImVec2(f.X(48), y), White(0.72f), line, 560);
   } else if (logo) {
     float w = 320 * f.s, h = w * float(logo.height) / float(logo.width);

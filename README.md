@@ -35,7 +35,7 @@
 | 🎮 **Any controller**, or keyboard and mouse with your own keys | 🏆 **Achievements** with notifications in game, 12 per game | ↩️ **Back to the launcher** any time: hold Back + Start, or Esc |
 | 💿 **Install from your own discs**, found on your PC by themselves | 🔄 **Updates itself** and every game | 💾 **Save backups** and restore in one click |
 | 🛋️ **A console style dashboard** with sounds, made for a controller | 🪟 **Borderless fullscreen**, windowed, any monitor | 🦍 **Other TRG Projects**, with King Kong Recompiled ready to install |
-| 🚂 **Add to Steam** with its own artwork, ready for Big Picture and the Steam Deck | 💬 **[Join the Discord](https://discord.gg/8eakYSvBZS)** right from Home | |
+| 🚂 **Add to Steam** with its own artwork, ready for Big Picture and the Steam Deck | 💬 **[Join the Discord](https://discord.gg/8eakYSvBZS)** right from Home | 🐧 **Linux and Steam Deck** too, as one AppImage |
 
 <div align="center">
 
@@ -79,7 +79,7 @@
 
 ## Getting started
 
-**You need:** Windows 10 or 11 (64 bit), a graphics card with DirectX 12, and a disc image you made from your own disc for each game you want to play (see [Which discs you need](#which-discs-you-need)).
+**You need:** Windows 10 or 11 (64 bit) with a DirectX 12 graphics card, or Linux (including the Steam Deck and other handhelds) with Vulkan, and a disc image you made from your own disc for each game you want to play (see [Which discs you need](#which-discs-you-need)).
 
 1. Download **WhoppingCollection-...-windows-x64.zip** from the [latest release](https://github.com/TekRantGaming/whopping-recompilation-collection/releases/latest) and unzip it anywhere. It holds the launcher and all three games, and everything stays in that folder, so it's portable.
 2. Run **whopping_launcher.exe**. It opens in fullscreen on Home. Windows may warn about an unknown publisher the first time: choose **More info**, then **Run anyway**.
@@ -87,6 +87,14 @@
 4. Press **Play** again, and from then on it starts straight away.
 
 While you play, **hold Back and Start** on the controller, or **hold Esc**, to come back to the launcher. **No game files are included**: they come from your own discs. Your saves are kept in `Documents\sneak_king`, `Documents\big_bumpin` and `Documents\pocketbike_racer`.
+
+### Linux and Steam Deck
+
+1. Download **WhoppingCollection-...-linux-x86_64.AppImage** from the [latest release](https://github.com/TekRantGaming/whopping-recompilation-collection/releases/latest).
+2. Make it executable (right click it, **Properties**, **Permissions**, **Allow executing file as program**, or `chmod +x` in a terminal) and run it. The launcher and all three games are inside.
+3. Everything else works as on Windows: pick a game, press **Play**, and choose your disc image the first time.
+
+The installed games and the launcher's settings go in `~/.local/share/whopping_collection`, and each game's saves and settings in `~/.local/share/sneak_king`, `~/.local/share/big_bumpin` and `~/.local/share/pocketbike_racer`. The AppImage updates itself like the Windows version. **Add to Steam** on Home puts it in your Steam library with its artwork, ready for Game Mode on a Steam Deck. The games draw with Vulkan; on a handheld, a higher power profile gives a higher frame rate (tested on a ROG Ally with Bazzite).
 
 ### Which discs you need
 

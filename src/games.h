@@ -50,7 +50,8 @@ const std::array<GameInfo, kGameCount>& Games();
 // Folders (UTF-8, forward slashes). Everything lives beside the launcher, so the
 // collection can be moved or deleted as one folder; saves stay where the games
 // keep them (Documents/<id>).
-std::string LauncherDir();
+std::string ProgramDir();   // the launcher's own folder (inside the AppImage on Linux)
+std::string LauncherDir();  // where it writes: its folder on Windows, XDG_DATA_HOME/whopping_collection on Linux
 std::string GameDir(const GameInfo& game);       // games/<id>: the program files from the release
 std::string GameDataDir(const GameInfo& game);   // games/<id>/game: the files from the player's disc
 std::string GameExePath(const GameInfo& game);

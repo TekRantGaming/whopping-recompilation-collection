@@ -1,5 +1,6 @@
 #include "games.h"
 
+#include <cstdlib>
 #include <filesystem>
 
 #include <trg/updater.h>
@@ -42,22 +43,56 @@ const std::array<GameInfo, kGameCount>& Games() {
   return games;
 }
 
-std::string LauncherDir() {
+std::string ProgramDir() {
   static const std::string dir = [] {
 #if defined(_WIN32)
     wchar_t buf[MAX_PATH * 4];
     DWORD n = GetModuleFileNameW(nullptr, buf, DWORD(std::size(buf)));
     if (n > 0 && n < std::size(buf)) return Utf8(fs::path(buf).parent_path());
+#else
+    std::error_code ec;
+    const fs::path exe = fs::read_symlink("/proc/self/exe", ec);
+    if (!ec) return Utf8(exe.parent_path());
 #endif
     return Utf8(fs::current_path());
   }();
   return dir;
 }
 
+#if defined(_WIN32)
+std::string LauncherDir() { return ProgramDir(); }
+#else
+namespace {
+// XDG_DATA_HOME, or ~/.local/share: where the SDK keeps each game's user folder too.
+std::string DataHome() {
+  if (const char* x = getenv("XDG_DATA_HOME"); x && *x) return x;
+  return std::string(getenv("HOME") ? getenv("HOME") : ".") + "/.local/share";
+}
+}  // namespace
+
+// On Linux the launcher and the games are inside the read only AppImage: everything written goes to the user's
+// data folder.
+std::string LauncherDir() {
+  static const std::string dir = DataHome() + "/whopping_collection";
+  return dir;
+}
+#endif
+
 std::string GameDir(const GameInfo& game) { return LauncherDir() + "/games/" + game.id; }
 std::string GameDataDir(const GameInfo& game) { return GameDir(game) + "/game"; }
+#if defined(_WIN32)
 std::string GameExePath(const GameInfo& game) { return GameDir(game) + "/" + game.exe; }
 std::string GameSettingsPath(const GameInfo& game) { return GameDir(game) + "/" + game.id + ".toml"; }
+#else
+// The games come inside the AppImage, beside the launcher, without ".exe"; each reads its settings from its user
+// folder (the games' OnConfigurePaths).
+std::string GameExePath(const GameInfo& game) {
+  std::string exe = game.exe;
+  if (exe.size() > 4 && exe.compare(exe.size() - 4, 4, ".exe") == 0) exe.resize(exe.size() - 4);
+  return ProgramDir() + "/" + exe;
+}
+std::string GameSettingsPath(const GameInfo& game) { return SavesDir(game) + "/" + game.id + ".toml"; }
+#endif
 std::string BackupsDir(const GameInfo& game) { return LauncherDir() + "/save-backups/" + game.id; }
 std::string CacheDir() { return LauncherDir() + "/cache"; }
 
@@ -71,7 +106,7 @@ std::string SavesDir(const GameInfo& game) {
   CoTaskMemFree(docs);
   return out;
 #else
-  return std::string(getenv("HOME") ? getenv("HOME") : ".") + "/.local/share/" + game.id;
+  return DataHome() + "/" + game.id;  // the SDK's user folder for the game
 #endif
 }
 
@@ -83,8 +118,13 @@ GameState DetectState(const GameInfo& game) {
 }
 
 std::string InstalledVersion(const GameInfo& game) {
+#if defined(_WIN32)
   auto manifest = trg::update::ReadManifest(GameDir(game) + "/update-files.txt");
   return manifest ? manifest->version : std::string();
+#else
+  (void)game;
+  return WHOPPING_VERSION;  // the games come inside the launcher's AppImage and update with it
+#endif
 }
 
 }  // namespace whopping

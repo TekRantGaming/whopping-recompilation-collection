@@ -6,6 +6,7 @@
 // Settings (the launcher's Achievements section): bk_achievement_toasts,
 // bk_achievement_sound, bk_achievement_volume.
 
+#if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -14,6 +15,9 @@
 #endif
 #include <windows.h>
 #include <mmsystem.h>
+#else
+#include <SDL3/SDL.h>
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -101,11 +105,27 @@ void PlayChime() {
   static int wav_volume = -1;
   const int volume = std::clamp(REXCVAR_GET(bk_achievement_volume), 0, 100);
   if (volume != wav_volume) {
+#if defined(_WIN32)
     PlaySoundW(nullptr, nullptr, 0);
+#endif
     wav = MakeChimeWav(volume / 100.0f);
     wav_volume = volume;
   }
+#if defined(_WIN32)
   PlaySoundW(reinterpret_cast<LPCWSTR>(wav.data()), nullptr, SND_MEMORY | SND_ASYNC | SND_NODEFAULT);
+#else
+  // SDL's audio (the game's own audio is SDL's on Linux): the samples after the 44 byte WAV header, on a stream of
+  // their own.
+  static SDL_AudioStream* stream = [] {
+    if (!SDL_WasInit(SDL_INIT_AUDIO)) SDL_InitSubSystem(SDL_INIT_AUDIO);
+    const SDL_AudioSpec spec{SDL_AUDIO_S16LE, 1, 44100};  // as MakeChimeWav writes it
+    return SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr);
+  }();
+  if (!stream) return;
+  SDL_ClearAudioStream(stream);
+  SDL_PutAudioStreamData(stream, wav.data() + 44, int(wav.size() - 44));
+  SDL_ResumeAudioStreamDevice(stream);
+#endif
 }
 
 class AchievementToast final : public rex::ui::AchievementNotificationDialog {

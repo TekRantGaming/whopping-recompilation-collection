@@ -3,8 +3,10 @@
 // half, closes the game; the launcher comes back when the game exits. Only
 // when the launcher started the game (it passes --bk_from_launcher=true).
 // Called from the XInputGetState hook in input_options.cpp, which the game
-// polls many times a second.
+// polls many times a second. On Linux the game's window is SDL's: Esc comes from SDL's keyboard state and the
+// game is closed with an SDL quit event.
 
+#if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -12,6 +14,9 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#else
+#include <SDL3/SDL.h>
+#endif
 
 #include <atomic>
 #include <chrono>
@@ -28,6 +33,7 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 
+#if defined(_WIN32)
 BOOL CALLBACK CloseOwnWindow(HWND hwnd, LPARAM) {
   DWORD pid = 0;
   GetWindowThreadProcessId(hwnd, &pid);
@@ -40,6 +46,20 @@ bool OwnWindowFocused() {
   GetWindowThreadProcessId(GetForegroundWindow(), &pid);
   return pid == GetCurrentProcessId();
 }
+
+bool EscHeld() { return (GetAsyncKeyState(VK_ESCAPE) & 0x8000) && OwnWindowFocused(); }
+void CloseGame() { EnumWindows(&CloseOwnWindow, 0); }
+#else
+bool EscHeld() {
+  const bool* keys = SDL_GetKeyboardState(nullptr);
+  return keys && keys[SDL_SCANCODE_ESCAPE] && SDL_GetKeyboardFocus();
+}
+void CloseGame() {
+  SDL_Event e{};
+  e.type = SDL_EVENT_QUIT;
+  SDL_PushEvent(&e);
+}
+#endif
 
 // How long a condition has held, or zero when it is not held.
 struct Held {
@@ -66,10 +86,10 @@ void ReturnToLauncherTick(uint32_t user, bool connected, uint16_t buttons) {
     constexpr uint16_t kStartBack = 0x0010 | 0x0020;  // XINPUT_GAMEPAD_START | XINPUT_GAMEPAD_BACK
     go = pad[user].Seconds(connected && (buttons & kStartBack) == kStartBack) >= 1.0;
   }
-  if (user == 0) go = go || key.Seconds((GetAsyncKeyState(VK_ESCAPE) & 0x8000) && OwnWindowFocused()) >= 1.5;
+  if (user == 0) go = go || key.Seconds(EscHeld()) >= 1.5;
   if (!go || closing.exchange(true)) return;
   REXLOG_INFO("BK: back to the launcher");
-  EnumWindows(&CloseOwnWindow, 0);
+  CloseGame();
 }
 
 }  // namespace bk

@@ -10,6 +10,7 @@
 // (opponents covered the same ground at 30 and about 100 frames a second), so the guest vblank is sped up and this
 // paces instead.
 
+#if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -17,6 +18,9 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#else
+#include <thread>
+#endif
 
 #include <algorithm>
 #include <atomic>
@@ -77,19 +81,26 @@ bool Unlocked() {
 void Pace() {
   const int cap = REXCVAR_GET(bk_frame_rate);
   if (cap == 30 || cap <= 0) return;
+#if defined(_WIN32)
   static HANDLE timer = CreateWaitableTimerExW(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+#endif
   static Clock::time_point next = Clock::now();
   const Clock::duration period = std::chrono::duration_cast<Clock::duration>(std::chrono::nanoseconds(1000000000LL / cap));
   next += period;
   Clock::time_point now = Clock::now();
   if (next < now - period) next = now;  // fell behind (loading): start again from here
   const auto sleep = next - now - std::chrono::milliseconds(1);
+#if defined(_WIN32)
   if (timer && sleep > Clock::duration::zero()) {
     LARGE_INTEGER due;
     due.QuadPart = -std::max<LONGLONG>(1, std::chrono::duration_cast<std::chrono::nanoseconds>(sleep).count() / 100);
     if (SetWaitableTimer(timer, &due, 0, nullptr, nullptr, FALSE)) WaitForSingleObject(timer, INFINITE);
   }
   while (Clock::now() < next) YieldProcessor();
+#else
+  if (sleep > Clock::duration::zero()) std::this_thread::sleep_for(sleep);  // Linux sleeps to the microsecond
+  while (Clock::now() < next) __builtin_ia32_pause();
+#endif
 }
 
 }  // namespace

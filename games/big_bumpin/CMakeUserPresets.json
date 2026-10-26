@@ -17,12 +17,14 @@
         },
         { "name": "bb-debug",          "inherits": ["win-amd64-debug",          "user-env"] },
         { "name": "bb-release",        "inherits": ["win-amd64-release",        "user-env"] },
-        { "name": "bb-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] }
+        { "name": "bb-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] },
+        { "name": "bb-linux-release",  "inherits": ["linux-amd64-release",      "user-env-linux"] }
     ],
     "buildPresets": [
         { "name": "bb-debug",          "configurePreset": "bb-debug" },
         { "name": "bb-release",        "configurePreset": "bb-release" },
-        { "name": "bb-relwithdebinfo", "configurePreset": "bb-relwithdebinfo" }
+        { "name": "bb-relwithdebinfo", "configurePreset": "bb-relwithdebinfo" },
+        { "name": "bb-linux-release",  "configurePreset": "bb-linux-release" }
     ]
 }
 

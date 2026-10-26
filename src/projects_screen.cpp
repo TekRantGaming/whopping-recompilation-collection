@@ -24,8 +24,18 @@ struct ProjectsState {
 };
 ProjectsState ps;
 
+// King Kong installs from here on Windows; on Linux its button opens its download page (its own AppImage).
+bool Installable(const Project& p) {
+#if defined(_WIN32)
+  return p.installable;
+#else
+  (void)p;
+  return false;
+#endif
+}
+
 std::string MainLabel(App& app, const Project& p) {
-  if (!p.installable) return "Download page";
+  if (!Installable(p)) return "Download page";
   Projects& pr = app.projects();
   if (pr.king_kong_task().running()) return "Please wait";
   if (app.running_game() == App::kKingKong) return "Playing";
@@ -33,7 +43,7 @@ std::string MainLabel(App& app, const Project& p) {
 }
 
 void MainAction(App& app, const Project& p) {
-  if (!p.installable) {
+  if (!Installable(p)) {
     trg::OpenUrl(std::string("https://github.com/") + p.owner + "/" + p.repo + "/releases/latest");
     return;
   }
@@ -108,14 +118,14 @@ void DrawProjects(App& app) {
   if (Hover(b.a, b.b) && MouseMoved()) ps.button = 1;
   const bool click_main = Clicked(a.a, a.b), click_git = Clicked(b.a, b.b);
   y += 48 * f.s + 20 * f.s;
-  if (p.installable && pr.king_kong_task().running()) {
+  if (Installable(p) && pr.king_kong_task().running()) {
     trg::Task& t = pr.king_kong_task();
     const float fr = t.fraction();
     char pct[16] = "";
     if (fr >= 0) std::snprintf(pct, sizeof pct, "  %.0f%%", double(fr) * 100.0);
     Text(f.regular, 15, ImVec2(f.X(48), y), White(0.85f), t.label() + pct, wrap);
     Bar(ImVec2(f.X(48), y + 28 * f.s), ImVec2(f.X(48 + 420), y + 34 * f.s), fr, White());
-  } else if (p.installable) {
+  } else if (Installable(p)) {
     Text(f.regular, 14, ImVec2(f.X(48), y), White(0.5f),
          pr.king_kong_installed() ? "Installed in this collection. Its own launcher keeps it up to date."
                                   : "Installs the newest stable version into this collection.",
@@ -148,7 +158,7 @@ void DrawProjects(App& app) {
       Text(f.semibold, 15, ImVec2(ta.x + 12 * f.s, ta.y + 12 * f.s), White(), list[size_t(i)].name,
            (tb.x - ta.x) / f.s - 24);
     }
-    if (list[size_t(i)].installable) {
+    if (Installable(list[size_t(i)])) {
       const std::string badge = pr.king_kong_installed() ? "Installed" : "Can be installed";
       const ImVec2 t = TextSize(f.semibold, 12, badge);
       const ImVec2 ba(ta.x + 8 * f.s, tb.y - 8 * f.s - t.y - 6 * f.s), bb(ba.x + t.x + 14 * f.s, tb.y - 8 * f.s);

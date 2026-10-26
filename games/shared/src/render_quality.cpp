@@ -15,6 +15,7 @@
 // DPI scaled logical units, so a window under 720 lines made King Kong draw at
 // 640 x 480. The guest is always told 1280 x 720 here.
 
+#if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -22,6 +23,9 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#else
+#include <SDL3/SDL.h>
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -70,10 +74,20 @@ void ApplyRenderQuality(rex::ui::Window* window) {
   // Output height in physical pixels: the screen in fullscreen, else the window.
   // The window is not sized yet here, so windowed uses the window height setting (logical units, times the
   // Windows display scale), 720 when it is automatic.
+#if defined(_WIN32)
   int height = GetSystemMetrics(SM_CYSCREEN);
+#else
+  const SDL_DisplayMode* dm = SDL_GetCurrentDisplayMode(SDL_GetPrimaryDisplay());
+  int height = dm ? dm->h : 0;
+#endif
   if (!REXCVAR_QUERY(bool, fullscreen)) {
     const int logical = REXCVAR_QUERY(int32_t, window_height) > 0 ? REXCVAR_QUERY(int32_t, window_height) : 720;
+#if defined(_WIN32)
     height = int(std::lround(logical * GetDpiForSystem() / 96.0));
+#else
+    const float content_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    height = int(std::lround(logical * (content_scale > 0 ? content_scale : 1.0f)));
+#endif
   }
   (void)window;
   const int scale = ScaleFor(mode, height);

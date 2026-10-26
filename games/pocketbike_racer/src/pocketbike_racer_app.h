@@ -6,8 +6,10 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <string>
 
 #include <rex/audio/sdl/sdl_audio_system.h>
+#include <rex/cvar.h>
 #include <rex/rex_app.h>
 #include <rex/runtime.h>
 #include <rex/ui/overlay/achievement_notification.h>
@@ -53,6 +55,18 @@ class PocketbikeRacerApp : public rex::ReXApp {
     bk::ApplyRenderQuality(window());
     return defaults;
   }
+
+#if defined(__linux__)
+  // On Linux the program sits in the read only AppImage: its settings file (which the launcher writes) and its logs
+  // go in the game's own user folder (XDG_DATA_HOME/<game>, where its saves are).
+  void OnConfigurePaths(rex::PathConfig& paths) override {
+    paths.config_path = paths.user_data_root / (std::string(GetName()) + ".toml");
+    std::error_code ec;
+    std::filesystem::create_directories(paths.user_data_root / "logs", ec);
+    if (rex::cvar::GetFlagByName("log_file").empty())
+      rex::cvar::SetFlagByName("log_file", (paths.user_data_root / "logs" / (std::string(GetName()) + ".log")).string());
+  }
+#endif
 
   void OnPostSetup() override {
     bk::InstallFpeGuard();  // after the runtime's own signal handlers

@@ -11,6 +11,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <SDL.h>
 
@@ -99,6 +100,7 @@ class App {
   bool game_running() const;
   int running_game() const { return running_game_; }
   void Quit() { quit_ = true; }
+  bool quitting() const { return quit_; }
   GameUi& game_ui(int game) { return *games_[game]; }
   GameAchievements& achievements(int game);  // loads them the first time
   const std::vector<Backup>& backups(int game);
@@ -137,7 +139,8 @@ class App {
   void StartAddToSteam();
   void TickSteam();
   enum class View { kHome, kHub, kSettings, kInstall, kCollection, kProjects };
-  bool Launch(const std::string& exe, const std::string& dir, const std::wstring& args, const std::string& title,
+  bool Launch(const std::string& exe, const std::string& dir, const std::vector<std::string>& args,
+              const std::string& title,
               int index);
   AppOptions options_;
   UploadFn upload_;

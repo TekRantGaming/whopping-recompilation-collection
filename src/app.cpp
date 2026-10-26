@@ -9,6 +9,12 @@
 
 #if defined(_WIN32)
 #include <windows.h>
+#else
+#include <spawn.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+extern char** environ;
 #endif
 
 namespace whopping {
@@ -30,15 +36,50 @@ void App::Start() {
   fs::create_directories(fs::u8path(LauncherDir() + "/games"), ec);
   launcher_settings_ = std::make_unique<trg::TextFileSettings>(LauncherDir() + "/whopping.txt");
 
+#if defined(_WIN32)
   fonts_ = trg::LoadSystemFonts(18.0f);
+#else
+  // Linux: Noto Sans, from the AppImage (usr/share/fonts beside usr/bin) or the system; the TRG launcher's DejaVu
+  // Sans when neither has it.
+  {
+    auto load = [](const char* name) -> ImFont* {
+      for (const std::string dir : {ProgramDir() + "/../share/fonts/", std::string("/usr/share/fonts/google-noto/"),
+                                    std::string("/usr/share/fonts/truetype/noto/")}) {
+        std::error_code e;
+        if (fs::exists(fs::u8path(dir + name), e)) return ImGui::GetIO().Fonts->AddFontFromFileTTF((dir + name).c_str(), 18.0f);
+      }
+      return nullptr;
+    };
+    if (ImFont* regular = load("NotoSans-Regular.ttf")) {
+      fonts_.size = 18.0f;
+      fonts_.regular = regular;
+      fonts_.semibold = load("NotoSans-SemiBold.ttf");
+      fonts_.bold = load("NotoSans-Bold.ttf");
+      if (!fonts_.bold) fonts_.bold = regular;
+      if (!fonts_.semibold) fonts_.semibold = fonts_.bold;
+      ImGui::GetIO().FontDefault = regular;
+    } else {
+      fonts_ = trg::LoadSystemFonts(18.0f);
+    }
+  }
+#endif
   sound::SetEnabled(launcher_settings_->GetBool("ui_sounds", true));
 
   self_updater_.stable_repo = kCollectionRepo;
+#if defined(_WIN32)
   self_updater_.asset = "WhoppingCollection-*-windows-x64.zip";  // the launcher's own zip in the packages release
+#else
+  // The AppImage (the launcher and the games together) is replaced as one file.
+  self_updater_.asset = "WhoppingCollection-*-linux-x86_64.AppImage";
+#endif
   self_updater_.tag_prefix = kPackagesTagPrefix;
   self_updater_.current_version = WHOPPING_VERSION;
-  self_updater_.program_dir = LauncherDir();
+  self_updater_.program_dir = ProgramDir();
+#if defined(_WIN32)
   self_updater_.program_name = "whopping_launcher.exe";
+#else
+  self_updater_.program_name = "whopping_launcher";
+#endif
   self_updater_.protected_paths = {"games", "save-backups", "cache", "whopping.txt"};
   self_updater_.state_file = LauncherDir() + "/update-state.txt";
   if (!g_release_server.empty()) self_updater_.api_base = g_release_server;
@@ -77,11 +118,13 @@ void App::Start() {
     art_->Start();
     // Updates install by themselves ("update them automatically when a new
     // version has been released"); the launcher checks once at startup.
+#if defined(_WIN32)  // on Linux the games come inside the launcher's AppImage and update with it
     if (launcher_settings_->GetBool("auto_update", true)) {
       for (int i = 0; i < kGameCount; ++i) {
         if (states_[i] != GameState::kNotDownloaded) StartDownload(Games()[i], games_[i]->jobs, true);
       }
     }
+#endif
     if (launcher_settings_->GetBool("update_check", true)) trg::StartUpdateCheck(self_updates_, self_updater_, "stable");
   } else {
     g_art_downloads_allowed = false;
@@ -278,10 +321,10 @@ bool App::LaunchGame(int game) {
     return false;
   }
   const GameInfo& g = Games()[game];
-  std::wstring args = L" --game_data_root=\"" + Wide(GameDataDir(g)) + L"\"";
-  args += L" --bk_from_launcher=true";  // Back and Start, or holding Esc, closes the game (return_to_launcher.cpp)
+  std::vector<std::string> args = {"--game_data_root=" + GameDataDir(g)};
+  args.push_back("--bk_from_launcher=true");  // Back and Start, or holding Esc, closes the game (return_to_launcher.cpp)
   // Testing (--test-play): never the player's own saves in Documents, a private folder instead.
-  if (options_.test_play >= 0) args += L" --user_data_root=\"" + Wide(LauncherDir() + "/test-userdata") + L"\"";
+  if (options_.test_play >= 0) args.push_back("--user_data_root=" + LauncherDir() + "/test-userdata");
   return Launch(GameExePath(g), GameDir(g), args, g.title, game);
 }
 
@@ -290,13 +333,17 @@ bool App::LaunchKingKong() {
     SetToast("A game is already running.");
     return false;
   }
-  return Launch(projects_->king_kong_exe(), projects_->king_kong_dir(), L"", "King Kong Recompiled", kKingKong);
+  return Launch(projects_->king_kong_exe(), projects_->king_kong_dir(), {}, "King Kong Recompiled", kKingKong);
 }
 
-bool App::Launch(const std::string& exe, const std::string& dir_utf8, const std::wstring& args,
+bool App::Launch(const std::string& exe, const std::string& dir_utf8, const std::vector<std::string>& args,
                  const std::string& title, int index) {
 #if defined(_WIN32)
-  std::wstring cmd = L"\"" + Wide(exe) + L"\"" + args;
+  std::wstring cmd = L"\"" + Wide(exe) + L"\"";
+  for (const std::string& a : args) {  // --name=value: the value in quotes (paths with spaces)
+    const size_t eq = a.find('=');
+    cmd += eq == std::string::npos ? L" " + Wide(a) : L" " + Wide(a.substr(0, eq + 1)) + L"\"" + Wide(a.substr(eq + 1)) + L"\"";
+  }
   std::wstring dir = Wide(dir_utf8);
   STARTUPINFOW si{};
   si.cb = sizeof si;
@@ -314,14 +361,42 @@ bool App::Launch(const std::string& exe, const std::string& dir_utf8, const std:
   SDL_MinimizeWindow(window_);
   return true;
 #else
-  return false;
+  // The game starts with the launcher's environment (the AppImage's library path) in its own folder; the launcher
+  // stays alive while it runs (Steam and the AppImage mount follow the launcher's process).
+  std::error_code ec;
+  fs::create_directories(fs::u8path(dir_utf8), ec);
+  std::vector<std::string> argv_s = {exe};
+  argv_s.insert(argv_s.end(), args.begin(), args.end());
+  std::vector<char*> argv;
+  for (std::string& a : argv_s) argv.push_back(a.data());
+  argv.push_back(nullptr);
+  posix_spawn_file_actions_t actions;
+  posix_spawn_file_actions_init(&actions);
+  posix_spawn_file_actions_addchdir_np(&actions, dir_utf8.c_str());
+  pid_t pid = 0;
+  const int err = posix_spawn(&pid, exe.c_str(), &actions, nullptr, argv.data(), environ);
+  posix_spawn_file_actions_destroy(&actions);
+  if (err != 0) {
+    SetToast(title + " could not be started.", true);
+    return false;
+  }
+  sound::Play(sound::Sound::kLaunch);
+  process_ = reinterpret_cast<void*>(intptr_t(pid));
+  running_game_ = index;
+  SDL_MinimizeWindow(window_);
+  return true;
 #endif
 }
 
 void App::Idle() {
 #if defined(_WIN32)
-  if (process_ && WaitForSingleObject(static_cast<HANDLE>(process_), 0) == WAIT_OBJECT_0) {
-    CloseHandle(static_cast<HANDLE>(process_));
+  const bool ended = process_ && WaitForSingleObject(static_cast<HANDLE>(process_), 0) == WAIT_OBJECT_0;
+  if (ended) CloseHandle(static_cast<HANDLE>(process_));
+#else
+  int wstatus = 0;
+  const bool ended = process_ && waitpid(pid_t(reinterpret_cast<intptr_t>(process_)), &wstatus, WNOHANG) > 0;
+#endif
+  if (ended) {
     process_ = nullptr;
     if (running_game_ >= 0 && running_game_ < kGameCount) {
       games_[running_game_]->achievements.loaded = false;  // it may have unlocked some
@@ -331,10 +406,11 @@ void App::Idle() {
     if (options_.test_play < 0) {
       SDL_RestoreWindow(window_);
       SDL_RaiseWindow(window_);
+    } else {
+      quit_ = true;  // testing: done when the game closes
     }
     RefreshStates();
   }
-#endif
   // Downloads and update checks finish here, and disc installs the player left
   // running; the install screen finishes its own (then goes to the game's page).
   for (int i = 0; i < kGameCount; ++i) {

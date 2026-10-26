@@ -17,12 +17,14 @@
         },
         { "name": "pr-debug",          "inherits": ["win-amd64-debug",          "user-env"] },
         { "name": "pr-release",        "inherits": ["win-amd64-release",        "user-env"] },
-        { "name": "pr-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] }
+        { "name": "pr-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] },
+        { "name": "pr-linux-release",  "inherits": ["linux-amd64-release",      "user-env-linux"] }
     ],
     "buildPresets": [
         { "name": "pr-debug",          "configurePreset": "pr-debug" },
         { "name": "pr-release",        "configurePreset": "pr-release" },
-        { "name": "pr-relwithdebinfo", "configurePreset": "pr-relwithdebinfo" }
+        { "name": "pr-relwithdebinfo", "configurePreset": "pr-relwithdebinfo" },
+        { "name": "pr-linux-release",  "configurePreset": "pr-linux-release" }
     ]
 }
 

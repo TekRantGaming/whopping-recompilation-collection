@@ -7,6 +7,9 @@
 
 #if defined(_WIN32)
 #include <windows.h>
+#else
+#include <cstdlib>
+#include <sys/wait.h>
 #endif
 
 namespace whopping {
@@ -19,7 +22,8 @@ std::string Utf8(const fs::path& p) {
   return std::string(s.begin(), s.end());
 }
 
-// Runs Windows' own tar (part of Windows 10 and 11), hidden. Returns its exit code.
+// Runs Windows' own tar (part of Windows 10 and 11), hidden; on Linux the system's tar (without the AppImage's
+// library path). Returns its exit code.
 int RunTar(const std::wstring& args) {
 #if defined(_WIN32)
   wchar_t sysdir[MAX_PATH];
@@ -37,8 +41,10 @@ int RunTar(const std::wstring& args) {
   CloseHandle(pi.hProcess);
   return int(code);
 #else
-  (void)args;
-  return -1;
+  const fs::path a(args);
+  const std::string cmd = "env -u LD_LIBRARY_PATH tar " + a.u8string() + " >/dev/null 2>&1";
+  const int rc = std::system(cmd.c_str());
+  return rc == -1 ? -1 : WEXITSTATUS(rc);
 #endif
 }
 

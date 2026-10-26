@@ -75,6 +75,16 @@ void DiscFinder::Run() {
     if (GetDriveTypeW(root) != DRIVE_FIXED) continue;
     roots.push_back({fs::path(root), 3});
   }
+#else
+  // The usual folders in the home folder, then removable drives and other mounted disks.
+  const fs::path home = getenv("HOME") ? getenv("HOME") : "";
+  if (!home.empty()) {
+    for (const char* d : {"Downloads", "Desktop", "Documents", "Videos"}) roots.push_back({home / d, 3});
+    roots.push_back({home, 1});
+  }
+  if (const char* user = getenv("USER")) roots.push_back({fs::path("/run/media") / user, 3});
+  roots.push_back({"/media", 3});
+  roots.push_back({"/mnt", 2});
 #endif
   std::vector<FoundDisc> found;
   std::vector<std::string> seen;

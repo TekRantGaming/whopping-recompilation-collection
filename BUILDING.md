@@ -45,3 +45,20 @@ powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 1.0.0 -
 
 Writes `dist\releases\v1.0.0\` with the launcher zip, the three game zips and one `SHA256SUMS.txt`, each zip with
 its file list for the updater. Every zip goes through VirusTotal before a release is published.
+
+## Linux
+
+The Linux build runs in WSL (`Ubuntu-24.04`, clang 20) with a Linux build of the same patched ReXGlue SDK (Vulkan) in
+`/root/whopping-linux/sdk`. From Windows:
+
+```
+wsl -d Ubuntu-24.04 -u root -- bash /mnt/d/BK-whopping-launcher/tools/linux/sync_to_wsl.sh
+wsl -d Ubuntu-24.04 -u root -- bash /mnt/d/BK-whopping-launcher/tools/linux/build_games.sh
+wsl -d Ubuntu-24.04 -u root -- bash /mnt/d/BK-whopping-launcher/tools/linux/build_launcher.sh
+wsl -d Ubuntu-24.04 -u root -- bash /mnt/d/BK-whopping-launcher/tools/linux/build_appimage.sh 1.0.0
+```
+
+The last one writes `dist\linux\WhoppingCollection-v1.0.0-linux-x86_64.AppImage`: the launcher and the three games in
+one AppImage (the launcher starts each game from beside itself), with Noto Sans (OFL) for the launcher. Its line goes
+into the release's `SHA256SUMS.txt` beside the zips, and the AppImage goes on both releases: the one players see and
+the packages release the launcher updates itself from.

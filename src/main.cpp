@@ -264,6 +264,7 @@ int main(int argc, char** argv) {
     if (quit) break;
     if (screenshot.empty() && (SDL_GetWindowFlags(win) & SDL_WINDOW_MINIMIZED)) {
       app.Idle();
+      if (app.quitting()) break;  // testing (--test-play): the game closed while the launcher was minimized
       SDL_Delay(30);
       continue;
     }

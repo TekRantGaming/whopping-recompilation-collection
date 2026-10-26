@@ -4,8 +4,10 @@
 //  * the mouse cursor hides while the controller is used and comes back when the mouse moves.
 // The window is SDL's; its window procedure is wrapped to answer WM_SETCURSOR while the cursor is hidden.
 // Driven from the XInputGetState hook in input_options.cpp, which the game polls many times a second.
-// BK_TEST_BACKGROUND=1 (test runs) leaves the window where it opens.
+// BK_TEST_BACKGROUND=1 (test runs) leaves the window where it opens. On Linux this does nothing: gamescope and the
+// desktop bring a new window forward themselves.
 
+#if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -14,6 +16,7 @@
 #endif
 #include <windows.h>
 #include <windowsx.h>
+#endif
 
 #include <atomic>
 #include <cstdint>
@@ -25,6 +28,7 @@
 REXCVAR_DECLARE(bool, bk_from_launcher);  // return_to_launcher.cpp
 
 namespace bk {
+#if defined(_WIN32)
 namespace {
 
 std::atomic<HWND> g_window{nullptr};
@@ -85,6 +89,9 @@ void GameWindowTick(bool pad_used) {
       PostMessageW(hwnd, WM_SETCURSOR, WPARAM(hwnd), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
   }
 }
+#else
+void GameWindowTick(bool) {}
+#endif
 
 // What the input hook passes: the state it saw last for slot `user`, and whether it changed.
 bool PadChanged(uint32_t user, const uint8_t* state16) {

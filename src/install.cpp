@@ -39,6 +39,15 @@ std::string DescribeTitleId(uint32_t title_id) {
 
 void StartDownload(const GameInfo& game, GameJobs& jobs, bool quiet) {
   if (jobs.task.running()) return;
+#if !defined(_WIN32)
+  // On Linux the games come inside the launcher's AppImage: they update when the launcher does.
+  (void)game;
+  if (!quiet) {
+    jobs.message = "On Linux the games update together with the launcher.";
+    jobs.message_is_error = false;
+  }
+  return;
+#endif
   jobs.quiet = quiet;
   jobs.kind = GameJobs::Kind::kDownload;
   jobs.message.clear();
