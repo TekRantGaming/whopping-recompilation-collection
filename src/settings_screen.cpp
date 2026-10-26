@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <trg/platform.h>
@@ -325,11 +326,19 @@ std::vector<Section> GameSections(App& app, int g) {
     (void)st;
   }});
 
-  s.push_back({"Keyboard and mouse", [&st](Rows& r) {
+  s.push_back({"Keyboard and mouse", [&st, g](Rows& r) {
     r.Toggle("Keyboard and mouse", "Play with the keyboard and mouse instead of a controller.", "mnk_mode", false);
     r.Toggle("Mouse look", "The mouse turns the camera. Off: the look keys do.", "mnk_mouse", false);
-    r.SliderFloat("Mouse sensitivity", "How fast the mouse turns the camera.", "mnk_sensitivity", 1.0f, 0.1f, 5.0f,
-                  0.1f, "%.1f");
+    // Sneak King's mouse turns its camera directly (its mouse_look.cpp), with its own setting; the other games
+    // turn the mouse into a right stick push (the runtime's mnk_sensitivity).
+    if (std::string_view(Games()[g].id) == "sneak_king") {
+      r.SliderFloat("Mouse sensitivity", "How fast the mouse turns the camera. The same mouse movement always turns "
+                    "it the same amount, at any speed.", "bk_mouse_sensitivity", 1.0f, 0.1f, 5.0f, 0.1f, "%.1f");
+      r.Toggle("Invert mouse up and down", "Moving the mouse up looks down.", "bk_mouse_invert_y", false);
+    } else {
+      r.SliderFloat("Mouse sensitivity", "How fast the mouse turns the camera.", "mnk_sensitivity", 1.0f, 0.1f, 5.0f,
+                    0.1f, "%.1f");
+    }
     r.Heading("KEYS");
     for (const Bind& b : kBinds) {
       const std::string cur = st.Get(b.key, b.def);

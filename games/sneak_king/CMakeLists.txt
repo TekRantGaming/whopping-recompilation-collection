@@ -20,6 +20,7 @@ set(SNEAKKING_SOURCES
     src/port_defaults.cpp
     ../shared/src/achievements_export.cpp
     src/input_options.cpp
+    src/mouse_look.cpp
     src/frame_stats.cpp
     ../shared/src/achievement_toast.cpp
     ../shared/src/return_to_launcher.cpp

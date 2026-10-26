@@ -24,6 +24,7 @@ void ApplyPortDefaults();  // port_defaults.cpp
 rex::ui::FrameStats GuestFrameStats();  // frame_stats.cpp
 void ApplyFrameRate();  // frame_stats.cpp
 void ApplyRenderQuality(rex::ui::Window* window);  // render_quality.cpp
+void InstallMouseLook(rex::ui::Window* window);  // mouse_look.cpp
 std::unique_ptr<rex::ui::AchievementNotificationDialog> CreateAchievementToast(
     rex::ui::ImGuiDrawer* drawer, rex::ui::ImmediateDrawer* immediate, rex::Runtime* runtime);  // achievement_toast.cpp
 void ExportAchievements(rex::Runtime* runtime, const std::filesystem::path& game_data_root);  // achievements_export.cpp
@@ -59,6 +60,7 @@ class SneakKingApp : public rex::ReXApp {
     bk::ApplyPortDefaults();
     SetGuestFrameStats(bk::GuestFrameStats);  // the F3 overlay's frame rate
     bk::ApplyFrameRate();
+    bk::InstallMouseLook(window());  // the mouse turns the camera directly
     bk::ExportAchievements(runtime(), game_data_root());
   }
 
