@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
   int ww = std::min(1440, int(float(usable.w) * 0.9f));
   int wh = std::min(860, int(float(usable.h) * 0.9f));
   Uint32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-  // Fullscreen by default , borderless; F11 switches.
+  // Fullscreen by default, borderless; F11 switches.
   const bool start_full = trg::TextFileSettings(whopping::LauncherDir() + "/whopping.txt").GetBool("fullscreen", true);
   if (!screenshot.empty()) {
     flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN;
