@@ -14,7 +14,8 @@ trg::UpdaterConfig GameUpdaterConfig(const GameInfo& game) {
   trg::UpdaterConfig c;
   if (!g_release_server.empty()) c.api_base = g_release_server;
   c.stable_repo = game.repo;
-  c.asset = std::string(game.zip_folder) + "-*-windows-x64.zip";  // its own zip in the collection's release
+  c.asset = std::string(game.zip_folder) + "-*-windows-x64.zip";  // its own zip in the packages release
+  c.tag_prefix = kPackagesTagPrefix;
   c.current_version = InstalledVersion(game);
   if (c.current_version.empty()) c.current_version = "0.0.0";
   c.program_dir = GameDir(game);

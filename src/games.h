@@ -9,10 +9,12 @@
 
 namespace whopping {
 
-// Where the collection is released: one GitHub repo for the launcher and the three games, each release holding
-// WhoppingCollection-vX-windows-x64.zip (the launcher), SneakKing-, BigBumpin- and PocketBikeRacer-vX-windows-x64.zip
-// and SHA256SUMS.txt.
+// Where the collection is released: one GitHub repo for the launcher and the three games. Each version has two
+// releases: vX, the one players see, with only whopping_launcher.exe, and packages-vX with what the launcher
+// downloads: WhoppingCollection-vX-windows-x64.zip (its own update), SneakKing-, BigBumpin- and
+// PocketBikeRacer-vX-windows-x64.zip and SHA256SUMS.txt.
 inline constexpr const char* kCollectionRepo = "TekRantGaming/whopping-recompilation-collection";
+inline constexpr const char* kPackagesTagPrefix = "packages-v";
 
 struct GameInfo {
   const char* id;           // folder and settings name: "sneak_king"

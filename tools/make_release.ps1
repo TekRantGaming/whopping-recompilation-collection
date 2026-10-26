@@ -1,13 +1,14 @@
-# Makes one release of the collection: the four zips and one SHA256SUMS.txt, laid out as the GitHub release
-# (and tools/fake_github.py) serves them.
+# Makes one version of the collection, laid out as its two GitHub releases serve it (src/games.h).
 #
 #   powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 1.0.0 -Out dist\releases
 #   powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 1.0.1 -Earlier 1.0.0 -Out dist\releases
 #
 # Writes <Out>\v<Version>\:
-#   WhoppingCollection-v<Version>-windows-x64.zip   the launcher (what players download)
-#   SneakKing-, BigBumpin-, PocketBikeRacer-v<Version>-windows-x64.zip   the games (the launcher fetches these)
-#   SHA256SUMS.txt                                   all four
+#   whopping_launcher.exe        the release players see (tag v<Version>): the launcher, runs on its own
+#   packages\                    the packages release (tag packages-v<Version>), what the launcher downloads:
+#     WhoppingCollection-v<Version>-windows-x64.zip                        the launcher's own update
+#     SneakKing-, BigBumpin-, PocketBikeRacer-v<Version>-windows-x64.zip  the games
+#     SHA256SUMS.txt                                                       all four
 # Each zip holds a file list (update-files.txt) made by the TRG updater's make_update_files.py, so updates
 # replace exactly the release's files and never the protected ones (disc files, settings, saves, installs).
 # Set VERSION to the release's version; the launcher is rebuilt here, the games must be built first with each
@@ -39,9 +40,11 @@ if ($fileVersion -ne $Version) { throw "VERSION says ${fileVersion}, set it to $
 cmd /c "`"$(Join-Path $root 'build.bat')`"" | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'the launcher did not build' }
 $Out = [IO.Path]::GetFullPath($Out)
-$tag = Join-Path $Out "v$Version"
-if (Test-Path $tag) { throw "$tag already exists" }
+$top = Join-Path $Out "v$Version"
+if (Test-Path $top) { throw "$top already exists" }
+$tag = Join-Path $top 'packages'
 New-Item -ItemType Directory -Force $tag | Out-Null
+Copy-Item (Join-Path $root 'build\whopping_launcher.exe') $top
 $stageRoot = Join-Path $Out "stage\v$Version"
 
 foreach ($p in $parts) {
@@ -61,7 +64,7 @@ foreach ($p in $parts) {
   # Each part's own name pattern, as the launcher's updater picks it from the release (install.cpp, app.cpp).
   $pyArgs = @($tool, 'package', $stage, '--version', $Version, '--zip', $zip, '--asset', "$($p.Folder)-*-windows-x64.zip")
   foreach ($x in $p.Protect) { $pyArgs += @('--protect', $x) }
-  if ($Earlier) { $pyArgs += @('--earlier', (Join-Path $Out "v$Earlier\$($p.Folder)-v$Earlier-windows-x64.zip")) }
+  if ($Earlier) { $pyArgs += @('--earlier', (Join-Path $Out "v$Earlier\packages\$($p.Folder)-v$Earlier-windows-x64.zip")) }
   $log = & python.exe @pyArgs 2>&1
   if ($LASTEXITCODE -ne 0) { $log | Select-Object -Last 10; throw "packaging $($p.Folder) failed" }
   "{0,-48} {1,6:N1} MB" -f (Split-Path -Leaf $zip), ((Get-Item $zip).Length / 1MB)
@@ -75,4 +78,4 @@ $sums | Set-Content (Join-Path $tag 'SHA256SUMS.txt') -Encoding ascii
 "SHA256SUMS.txt: $(@($sums).Count) zips"
 "SDK pair: rexruntime $((Get-FileHash (Join-Path $sdk 'rexruntime.dll')).Hash.Substring(0, 8)), " +
   "rexgpu-xenos $((Get-FileHash (Join-Path $sdk 'rexgpu-xenos.dll')).Hash.Substring(0, 8))"
-"Next: every zip through VirusTotal before anything is published."
+"Next: the exe and every zip through VirusTotal before anything is published."

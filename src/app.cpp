@@ -32,7 +32,8 @@ void App::Start() {
   sound::SetEnabled(launcher_settings_->GetBool("ui_sounds", true));
 
   self_updater_.stable_repo = kCollectionRepo;
-  self_updater_.asset = "WhoppingCollection-*-windows-x64.zip";  // the launcher's own zip in each release
+  self_updater_.asset = "WhoppingCollection-*-windows-x64.zip";  // the launcher's own zip in the packages release
+  self_updater_.tag_prefix = kPackagesTagPrefix;
   self_updater_.current_version = WHOPPING_VERSION;
   self_updater_.program_dir = LauncherDir();
   self_updater_.program_name = "whopping_launcher.exe";
