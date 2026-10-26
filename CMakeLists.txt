@@ -13,6 +13,8 @@ project(whopping_launcher VERSION ${WHOPPING_RELEASE_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# The C runtime linked in, so whopping_launcher.exe runs on its own (the release offers the exe by itself too).
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 set(TRG_LAUNCHER_STANDALONE ON CACHE BOOL "" FORCE)
 set(TRG_LAUNCHER_BUILD_DEMO OFF CACHE BOOL "" FORCE)
