@@ -81,11 +81,10 @@
 
 **You need:** Windows 10 or 11 (64 bit), a graphics card with DirectX 12, and a disc image you made from your own disc for each game you want to play (see [Which discs you need](#which-discs-you-need)).
 
-1. Download **WhoppingCollection-...-windows-x64.zip** from the [latest release](https://github.com/TekRantGaming/whopping-recompilation-collection/releases/latest) and unzip it anywhere. Everything stays in that folder (the games install next to the launcher), so it's portable.
+1. Download **WhoppingCollection-...-windows-x64.zip** from the [latest release](https://github.com/TekRantGaming/whopping-recompilation-collection/releases/latest) and unzip it anywhere. It holds the launcher and all three games, and everything stays in that folder, so it's portable.
 2. Run **whopping_launcher.exe**. It opens in fullscreen on Home. Windows may warn about an unknown publisher the first time: choose **More info**, then **Run anyway**.
-3. Pick a game and choose **Download**. The launcher fetches that game's port from the same release.
-4. Choose **Install**. The launcher finds your disc images on its own (or choose the file), checks the disc and copies the game files next to the port.
-5. Press **Play** on the game's page.
+3. Pick a game and press **Play**. The first time, the launcher asks for your disc image of that game: it finds disc images on your PC by itself (or choose the file), checks the disc and copies the game files next to the game.
+4. Press **Play** again, and from then on it starts straight away.
 
 While you play, **hold Back and Start** on the controller, or **hold Esc**, to come back to the launcher. **No game files are included**: they come from your own discs. Your saves are kept in `Documents\sneak_king`, `Documents\big_bumpin` and `Documents\pocketbike_racer`.
 

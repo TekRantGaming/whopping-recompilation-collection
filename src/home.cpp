@@ -225,7 +225,7 @@ void DrawHome(App& app) {
     std::string line;
     switch (app.state(g)) {
       case GameState::kNotDownloaded: line = "Not on this PC yet"; break;
-      case GameState::kDownloaded: line = std::string("Downloaded") + kBullet + "Install it from your game disc"; break;
+      case GameState::kDownloaded: line = std::string("Ready") + kBullet + "Play asks for your disc image the first time"; break;
       case GameState::kInstalled: {
         line = app.running_game() == g ? "Playing now" : "Ready to play";
         const std::string v = InstalledVersion(game);

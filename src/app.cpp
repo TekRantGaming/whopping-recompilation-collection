@@ -188,7 +188,7 @@ const char* App::PrimaryLabel(int game) const {
   if (running_game_ == game) return "Playing";
   switch (states_[game]) {
     case GameState::kNotDownloaded: return "Download";
-    case GameState::kDownloaded: return "Install";
+    case GameState::kDownloaded: return "Play";  // asks for the disc first (the games come in the zip)
     case GameState::kInstalled: return "Play";
   }
   return "";

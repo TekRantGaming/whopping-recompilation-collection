@@ -168,8 +168,8 @@ void DrawHub(App& app, int g) {
     switch (app.state(g)) {
       case GameState::kNotDownloaded: line = "Not on this PC yet. Download gets the newest version."; break;
       case GameState::kDownloaded:
-        line = "Downloaded" + (v.empty() ? std::string() : kBullet + ("Version " + v)) + kBullet +
-               "Needs the files from your game disc";
+        line = (v.empty() ? std::string("Ready") : "Version " + v) + kBullet +
+               "Play asks for your disc image the first time";
         break;
       case GameState::kInstalled:
         line = "Installed" + (v.empty() ? std::string() : kBullet + ("Version " + v));

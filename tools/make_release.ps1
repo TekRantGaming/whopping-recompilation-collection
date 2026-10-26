@@ -5,7 +5,8 @@
 #
 # Writes <Out>\v<Version>\:
 #   WhoppingCollection-v<Version>-windows-x64.zip   the release players see (tag v<Version>): the portable
-#                                launcher, unzipped anywhere (as King Kong Recompiled ships)
+#                                launcher with the three games in its games folder, unzipped anywhere (as King
+#                                Kong Recompiled ships); each game asks for its disc image the first time
 #   packages\                    the packages release (tag packages-v<Version>), what the launcher downloads:
 #     WhoppingCollection-v<Version>-windows-x64.zip                        the launcher's own update
 #     SneakKing-, BigBumpin-, PocketBikeRacer-v<Version>-windows-x64.zip  the games
@@ -28,11 +29,11 @@ $crtFiles = 'msvcp140.dll', 'msvcp140_atomic_wait.dll', 'vcruntime140.dll', 'vcr
 $parts = @(
   @{ Folder = 'WhoppingCollection'; Build = Join-Path $root 'build'; Exe = 'whopping_launcher.exe'; Sdk = $false;
      Protect = @('games', 'save-backups', 'cache', 'whopping.txt', 'test-userdata') },
-  @{ Folder = 'SneakKing'; Build = Join-Path $root 'games\sneak_king\out\build\bk-release'; Exe = 'sneak_king.exe'; Sdk = $true;
+  @{ Folder = 'SneakKing'; Id = 'sneak_king'; Build = Join-Path $root 'games\sneak_king\out\build\bk-release'; Exe = 'sneak_king.exe'; Sdk = $true;
      Protect = @('game', 'sneak_king.toml', 'logs') },
-  @{ Folder = 'BigBumpin'; Build = Join-Path $root 'games\big_bumpin\out\build\bb-release'; Exe = 'big_bumpin.exe'; Sdk = $true;
+  @{ Folder = 'BigBumpin'; Id = 'big_bumpin'; Build = Join-Path $root 'games\big_bumpin\out\build\bb-release'; Exe = 'big_bumpin.exe'; Sdk = $true;
      Protect = @('game', 'big_bumpin.toml', 'logs') },
-  @{ Folder = 'PocketBikeRacer'; Build = Join-Path $root 'games\pocketbike_racer\out\build\pr-release'; Exe = 'pocketbike_racer.exe'; Sdk = $true;
+  @{ Folder = 'PocketBikeRacer'; Id = 'pocketbike_racer'; Build = Join-Path $root 'games\pocketbike_racer\out\build\pr-release'; Exe = 'pocketbike_racer.exe'; Sdk = $true;
      Protect = @('game', 'pocketbike_racer.toml', 'logs') }
 )
 # The launcher reports the VERSION file's version: it must be this release's, and the launcher is rebuilt with it.
@@ -70,8 +71,22 @@ foreach ($p in $parts) {
   "{0,-48} {1,6:N1} MB" -f (Split-Path -Leaf $zip), ((Get-Item $zip).Length / 1MB)
 }
 
-# The players' release: the launcher's zip again, on its own.
-Copy-Item (Join-Path $tag "WhoppingCollection-v$Version-windows-x64.zip") $top
+# The players' release: the launcher's zip with each game's zip unpacked into games\<id>, exactly as the
+# launcher's own download would put it there (its update list included, so game updates work as usual).
+$players = Join-Path $stageRoot 'players'
+if (Test-Path $players) { Remove-Item -Recurse -Force $players }
+Expand-Archive (Join-Path $tag "WhoppingCollection-v$Version-windows-x64.zip") $players
+foreach ($p in $parts | Where-Object { $_.Id }) {
+  $unpack = Join-Path $stageRoot "unpack-$($p.Folder)"
+  if (Test-Path $unpack) { Remove-Item -Recurse -Force $unpack }
+  Expand-Archive (Join-Path $tag "$($p.Folder)-v$Version-windows-x64.zip") $unpack
+  $dest = Join-Path $players "WhoppingCollection\games\$($p.Id)"
+  New-Item -ItemType Directory -Force $dest | Out-Null
+  Copy-Item (Join-Path $unpack "$($p.Folder)\*") $dest -Recurse
+}
+$playersZip = Join-Path $top "WhoppingCollection-v$Version-windows-x64.zip"
+Compress-Archive (Join-Path $players 'WhoppingCollection') $playersZip
+"{0,-48} {1,6:N1} MB  (players: the launcher and the three games)" -f (Split-Path -Leaf $playersZip), ((Get-Item $playersZip).Length / 1MB)
 
 # One SHA256SUMS.txt for the whole release (each package call above wrote one for its own zip only).
 $sums = Get-ChildItem $tag -Filter '*.zip' | Sort-Object Name | ForEach-Object {
