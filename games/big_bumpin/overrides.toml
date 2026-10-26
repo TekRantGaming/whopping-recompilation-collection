@@ -1,0 +1,5 @@
+# Hand made fixes, each with a comment.
+[functions]
+0x822C9038 = {}  # tail call target from 0x822C883C, not found by the analyzer
+0x822D0728 = {}  # tail call target from 0x822D1074, not found by the analyzer
+

@@ -1,0 +1,31 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "user-env",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "${sourceDir}/../../tools/rexglue/win-amd64"
+            }
+        },
+        {
+            "name": "user-env-linux",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "${sourceDir}/../../tools/rexglue/linux-amd64"
+            }
+        },
+        { "name": "pr-debug",          "inherits": ["win-amd64-debug",          "user-env"] },
+        { "name": "pr-release",        "inherits": ["win-amd64-release",        "user-env"] },
+        { "name": "pr-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] }
+    ],
+    "buildPresets": [
+        { "name": "pr-debug",          "configurePreset": "pr-debug" },
+        { "name": "pr-release",        "configurePreset": "pr-release" },
+        { "name": "pr-relwithdebinfo", "configurePreset": "pr-relwithdebinfo" }
+    ]
+}
+
+
+
+

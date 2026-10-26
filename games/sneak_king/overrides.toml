@@ -1,0 +1,3 @@
+[functions]
+0x822B6940 = {}  # tail call target from 0x822B4D5C, not found by the analyzer
+

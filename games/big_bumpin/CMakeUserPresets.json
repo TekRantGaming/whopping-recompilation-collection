@@ -1,0 +1,31 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "user-env",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "${sourceDir}/../../tools/rexglue/win-amd64"
+            }
+        },
+        {
+            "name": "user-env-linux",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "${sourceDir}/../../tools/rexglue/linux-amd64"
+            }
+        },
+        { "name": "bb-debug",          "inherits": ["win-amd64-debug",          "user-env"] },
+        { "name": "bb-release",        "inherits": ["win-amd64-release",        "user-env"] },
+        { "name": "bb-relwithdebinfo", "inherits": ["win-amd64-relwithdebinfo", "user-env"] }
+    ],
+    "buildPresets": [
+        { "name": "bb-debug",          "configurePreset": "bb-debug" },
+        { "name": "bb-release",        "configurePreset": "bb-release" },
+        { "name": "bb-relwithdebinfo", "configurePreset": "bb-relwithdebinfo" }
+    ]
+}
+
+
+
+

@@ -1,0 +1,60 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- The collection's wordmark, rendered to tools/logo/whopping_logo.png by tools/logo/render_logo.ps1
+     (headless Edge, transparent background) and built into the launcher (src/logo_png.h). Our own design:
+     a small crown, "THE", "WHOPPING" in a chunky gold face and "RECOMPILATION COLLECTION" under it.
+     Fonts: Titan One and Oswald (SIL Open Font Licence), from Google Fonts. -->
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Oswald:wght@600&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: transparent; }
+  body { width: 1400px; height: 440px; display: flex; align-items: center; justify-content: center; }
+  svg { overflow: visible; }
+</style></head>
+<body>
+<svg width="1400" height="440" viewBox="0 0 1400 440" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF3B0"/>
+      <stop offset="0.38" stop-color="#FFD24A"/>
+      <stop offset="0.72" stop-color="#F59A1B"/>
+      <stop offset="1" stop-color="#D9561A"/>
+    </linearGradient>
+    <linearGradient id="crown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE98A"/>
+      <stop offset="1" stop-color="#E8901A"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+
+  <!-- crown -->
+  <g transform="translate(700,70)" filter="url(#shadow)">
+    <path d="M-62,34 L-74,-26 L-34,4 L0,-40 L34,4 L74,-26 L62,34 Z" fill="url(#crown)" stroke="#3B1A07" stroke-width="9" stroke-linejoin="round"/>
+    <rect x="-64" y="34" width="128" height="20" rx="6" fill="url(#crown)" stroke="#3B1A07" stroke-width="9"/>
+    <circle cx="0" cy="-44" r="9" fill="#D7262E" stroke="#3B1A07" stroke-width="6"/>
+    <circle cx="-76" cy="-30" r="7" fill="#D7262E" stroke="#3B1A07" stroke-width="5"/>
+    <circle cx="76" cy="-30" r="7" fill="#D7262E" stroke="#3B1A07" stroke-width="5"/>
+  </g>
+
+  <!-- THE -->
+  <text x="700" y="158" text-anchor="middle" font-family="Oswald" font-weight="600" font-size="40" letter-spacing="18"
+        fill="#FFFFFF" stroke="#3B1A07" stroke-width="7" paint-order="stroke" filter="url(#shadow)">THE</text>
+
+  <!-- WHOPPING: thick dark outline, then the gold face with a light rim -->
+  <g filter="url(#shadow)">
+    <text x="700" y="300" text-anchor="middle" font-family="Titan One" font-size="168" letter-spacing="6"
+          fill="#3B1A07" stroke="#3B1A07" stroke-width="30" stroke-linejoin="round">WHOPPING</text>
+    <text x="700" y="300" text-anchor="middle" font-family="Titan One" font-size="168" letter-spacing="6"
+          fill="url(#gold)" stroke="#FFF6CC" stroke-width="3" stroke-linejoin="round">WHOPPING</text>
+  </g>
+
+  <!-- RECOMPILATION COLLECTION, with a short rule on each side -->
+  <g filter="url(#shadow)">
+    <text x="700" y="386" text-anchor="middle" font-family="Oswald" font-weight="600" font-size="50" letter-spacing="14"
+          fill="#FFFFFF" stroke="#3B1A07" stroke-width="8" paint-order="stroke">RECOMPILATION COLLECTION</text>
+    <rect x="166" y="360" width="70" height="8" rx="4" fill="#FFD24A" stroke="#3B1A07" stroke-width="4"/>
+    <rect x="1164" y="360" width="70" height="8" rx="4" fill="#FFD24A" stroke="#3B1A07" stroke-width="4"/>
+  </g>
+</svg>
+</body></html>

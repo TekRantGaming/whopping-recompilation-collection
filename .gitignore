@@ -1,0 +1,34 @@
+# Build output and test runs
+/build/
+/runs/
+/third_party/trg-launcher/build/
+*.log
+# What the launcher creates beside itself when it runs (it runs from build/ or runs/ here; games/ is the ports)
+/cache/
+/save-backups/
+/whopping.txt
+/install-test.txt
+# Never game files
+*.iso
+*.xex
+/mockups/
+/dist/
+
+# --- The games (games/<id>) ---
+# Copyrighted game data and everything made from it: never commit.
+*.iso
+*.xex
+/games/*/assets/
+/games/*/image.bin
+/games/*/generated/
+# Build output, logs and codegen scratch.
+/games/*/out/
+/games/*/missing_funcs.all.toml
+/games/*/codegen.log
+/games/*/build*.log
+# The ReXGlue SDK install (a junction to the patched SDK, see BUILDING.md).
+/tools/rexglue/
+# Private notes, never in the repo
+/OWNER.md
+/DECISIONS.md
+/ref/
