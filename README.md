@@ -81,7 +81,7 @@
 
 **You need:** Windows 10 or 11 (64 bit), a graphics card with DirectX 12, and a disc image you made from your own disc for each game you want to play (see [Which discs you need](#which-discs-you-need)).
 
-1. Download **whopping_launcher.exe** from the [latest release](https://github.com/TekRantGaming/whopping-recompilation-collection/releases/latest) and put it in a folder of its own (the games install next to it).
+1. Download **WhoppingCollection-...-windows-x64.zip** from the [latest release](https://github.com/TekRantGaming/whopping-recompilation-collection/releases/latest) and unzip it anywhere. Everything stays in that folder (the games install next to the launcher), so it's portable.
 2. Run **whopping_launcher.exe**. It opens in fullscreen on Home. Windows may warn about an unknown publisher the first time: choose **More info**, then **Run anyway**.
 3. Pick a game and choose **Download**. The launcher fetches that game's port from the same release.
 4. Choose **Install**. The launcher finds your disc images on its own (or choose the file), checks the disc and copies the game files next to the port.
@@ -197,7 +197,7 @@ Everything is set up before a game starts, with a controller, the keyboard or th
 
 ### Saves and updates
 
-Each game's **Saves and install** page backs up your saves and restores them, opens the save, backup and game folders, reinstalls from your disc or removes the game. When the launcher opens it checks GitHub for new versions of itself and of each game and **installs them by themselves**; your games, saves and settings stay as they are. Turn that off in the launcher's own **Settings**.
+Each game's **Saves and install** page backs up your saves and restores them, opens the save, backup and game folders, reinstalls from your disc or removes the game. When the launcher opens it checks GitHub for new versions of itself and of each game and **installs them by themselves**, restarting into a new launcher once nothing else is going on; your games, saves and settings stay as they are. Turn that off in the launcher's own **Settings**.
 
 ## Xbox 360 vs PC
 

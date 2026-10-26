@@ -133,6 +133,7 @@ class App {
     steam::Result result;       // read once done
   };
   void StartSteamCheck();
+  void PollSelfUpdate();
   void StartAddToSteam();
   void TickSteam();
   enum class View { kHome, kHub, kSettings, kInstall, kCollection, kProjects };
@@ -158,6 +159,7 @@ class App {
   SettingsView collection_view_;
   Texture discord_icon_, steam_icon_;
   std::shared_ptr<SteamState> steam_;
+  bool self_update_tried_ = false;  // the startup install of the launcher's own update (once)
   // The running game.
   void* process_ = nullptr;
   int running_game_ = -1;

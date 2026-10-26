@@ -509,8 +509,8 @@ void DrawCollection(App& app) {
   s.push_back({"General", [&app](Rows& r) {
     r.Toggle("Install game updates by themselves", "New versions of the games download and install when the "
              "launcher starts.", "auto_update", true);
-    r.Toggle("Check for launcher updates", "Looks for a new version of this launcher when it starts.",
-             "update_check", true);
+    r.Toggle("Install launcher updates by themselves", "A new version of this launcher downloads when it starts, "
+             "then it restarts into it.", "update_check", true);
     if (r.Toggle("Interface sounds", "Soft sounds as you move around the launcher.", "ui_sounds", true))
       sound::SetEnabled(app.launcher_settings().GetBool("ui_sounds", true));
     if (r.Toggle("Fullscreen", "The launcher fills the screen. F11 switches at any time.", "fullscreen", true)) {
@@ -519,19 +519,7 @@ void DrawCollection(App& app) {
     }
   }});
   s.push_back({"Updates", [&app, &up, &cfg](Rows& r) {
-    // The launcher's own updates (the TRG updater's state, shown in these rows).
-    std::string error;
-    if (const trg::Task::State st = up.task.Finish(&error); st != trg::Task::State::kIdle) {
-      if (up.checking) {
-        up.checking = false;
-        up.message = st == trg::Task::State::kDone ? up.check.message : error.empty() ? "Cancelled." : error;
-      } else if (up.installing) {
-        up.installing = false;
-        up.restart_ready = up.report.installed;
-        up.message = up.report.installed ? up.report.message : error.empty() ? "Cancelled." : error;
-        if (up.report.installed) up.check.found.reset();
-      }
-    }
+    // The launcher's own updates (the TRG updater's state, kept by App::PollSelfUpdate).
     r.Info("Version", WHOPPING_VERSION);
     if (up.task.running()) {
       r.Progress(up.task.label(), up.task.fraction());

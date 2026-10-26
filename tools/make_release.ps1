@@ -4,7 +4,8 @@
 #   powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 1.0.1 -Earlier 1.0.0 -Out dist\releases
 #
 # Writes <Out>\v<Version>\:
-#   whopping_launcher.exe        the release players see (tag v<Version>): the launcher, runs on its own
+#   WhoppingCollection-v<Version>-windows-x64.zip   the release players see (tag v<Version>): the portable
+#                                launcher, unzipped anywhere (as King Kong Recompiled ships)
 #   packages\                    the packages release (tag packages-v<Version>), what the launcher downloads:
 #     WhoppingCollection-v<Version>-windows-x64.zip                        the launcher's own update
 #     SneakKing-, BigBumpin-, PocketBikeRacer-v<Version>-windows-x64.zip  the games
@@ -44,7 +45,6 @@ $top = Join-Path $Out "v$Version"
 if (Test-Path $top) { throw "$top already exists" }
 $tag = Join-Path $top 'packages'
 New-Item -ItemType Directory -Force $tag | Out-Null
-Copy-Item (Join-Path $root 'build\whopping_launcher.exe') $top
 $stageRoot = Join-Path $Out "stage\v$Version"
 
 foreach ($p in $parts) {
@@ -70,6 +70,9 @@ foreach ($p in $parts) {
   "{0,-48} {1,6:N1} MB" -f (Split-Path -Leaf $zip), ((Get-Item $zip).Length / 1MB)
 }
 
+# The players' release: the launcher's zip again, on its own.
+Copy-Item (Join-Path $tag "WhoppingCollection-v$Version-windows-x64.zip") $top
+
 # One SHA256SUMS.txt for the whole release (each package call above wrote one for its own zip only).
 $sums = Get-ChildItem $tag -Filter '*.zip' | Sort-Object Name | ForEach-Object {
   "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
@@ -78,4 +81,4 @@ $sums | Set-Content (Join-Path $tag 'SHA256SUMS.txt') -Encoding ascii
 "SHA256SUMS.txt: $(@($sums).Count) zips"
 "SDK pair: rexruntime $((Get-FileHash (Join-Path $sdk 'rexruntime.dll')).Hash.Substring(0, 8)), " +
   "rexgpu-xenos $((Get-FileHash (Join-Path $sdk 'rexgpu-xenos.dll')).Hash.Substring(0, 8))"
-"Next: the exe and every zip through VirusTotal before anything is published."
+"Next: every zip through VirusTotal before anything is published."

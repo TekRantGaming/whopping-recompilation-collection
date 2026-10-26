@@ -360,6 +360,43 @@ void App::DropFile(const std::string& path) {
   StartDiscInstall(Games()[current_], path, u.jobs);
 }
 
+// The launcher's own updates: the result of a check or install (shown on the Updates page), and, when updates are
+// on, the new version found at startup installs by itself and the launcher restarts into it as soon as nothing
+// else is going on (no game running, no download, no install, nothing open).
+void App::PollSelfUpdate() {
+  trg::UpdatesState& up = self_updates_;
+  std::string error;
+  if (const trg::Task::State st = up.task.Finish(&error); st != trg::Task::State::kIdle) {
+    if (up.checking) {
+      up.checking = false;
+      up.message = st == trg::Task::State::kDone ? up.check.message : error.empty() ? "Cancelled." : error;
+    } else if (up.installing) {
+      up.installing = false;
+      up.restart_ready = up.report.installed;
+      up.message = up.report.installed ? up.report.message : error.empty() ? "Cancelled." : error;
+      if (up.report.installed) up.check.found.reset();
+    }
+  }
+  if (!launcher_settings_->GetBool("update_check", true)) return;
+  if (!self_update_tried_ && !up.task.running() && trg::UpdateWaiting(up)) {
+    self_update_tried_ = true;
+    const trg::Release rel = *up.check.found;
+    up.installing = true;
+    up.message.clear();
+    trg::InstallReport* out = &up.report;
+    const trg::UpdaterConfig c = self_updater_;
+    up.task.Start("Downloading version " + rel.version,
+                  [c, rel, out](trg::Task& t) { return trg::InstallUpdate(t, c, rel, out); });
+  }
+  if (up.restart_ready && self_update_tried_ && !game_running() && !dash::ModalOpen()) {
+    for (const auto& g : games_)
+      if (g->jobs.task.running()) return;
+    if (trg::RestartProgram()) Quit();
+    else up.message = "Could not restart by itself. Close the launcher and start it again.";
+    self_update_tried_ = false;  // once
+  }
+}
+
 bool App::Frame() {
   if (options_.test_play >= 0 && !game_running()) return false;  // testing: the game closed
   // Testing: report the install or download result in install-test.txt or
@@ -380,6 +417,7 @@ bool App::Frame() {
   }
   art_->Poll();
   TickSteam();
+  PollSelfUpdate();
   projects_->Poll();
   for (int i = 0; i < kGameCount; ++i) PollManage(i);
   if (view_ != drawn_view_) {
