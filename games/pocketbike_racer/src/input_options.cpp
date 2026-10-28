@@ -14,10 +14,16 @@
 //
 // XINPUT_STATE (big endian): +0 packet number, +4 buttons, +6 left trigger,
 // +7 right trigger, +8/+10 left stick x/y, +12/+14 right stick x/y.
+//
+// Every Xam input call goes through one lock (XamInputLock), the keystroke read sub_8220C2F0 (the title's
+// XInputGetKeystroke) included. The runtime's InputSystem rebuilds its device list on each call without a lock of
+// its own, so two threads calling at once free it twice: Big Bumpin's matches crashed that way within seconds. The
+// same lock keeps this game safe if it ever reads the pad from two threads.
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <mutex>
 #include <string>
 
 #include <rex/cvar.h>
@@ -44,6 +50,9 @@ REXCVAR_DEFINE_STRING(bk_remap_rs, "rs", "Collection", "Right stick click acts a
 namespace bk {
 
 namespace {
+
+std::mutex xam_input_mutex;
+using XamInputLock = std::lock_guard<std::mutex>;
 
 uint16_t Load16(const uint8_t* base, uint32_t a) { return uint16_t(base[a] << 8 | base[a + 1]); }
 void Store16(uint8_t* base, uint32_t a, uint16_t v) {
@@ -140,7 +149,10 @@ REX_EXTERN(__imp__sub_8220C2C8);
 REX_HOOK_RAW(sub_8220C2C8) {
   const uint32_t state = ctx.r4.u32;
   const uint32_t user = ctx.r3.u32;
+  {
+    bk::XamInputLock lock(bk::xam_input_mutex);
     __imp__sub_8220C2C8(ctx, base);
+  }
   const bool connected = ctx.r3.u32 == 0 && state;
   bk::ReturnToLauncherTick(user, connected, connected ? bk::Load16(base, state + 4) : 0);  // return_to_launcher.cpp
   bk::GameWindowTick(connected && bk::PadChanged(user, base + state));  // game_window.cpp: front, cursor
@@ -155,6 +167,7 @@ REX_EXTERN(__imp__sub_8220C2D8);
 REX_HOOK_RAW(sub_8220C2D8) {
   const uint32_t vib = ctx.r4.u32;
   const int percent = REXCVAR_GET(bk_vibration);
+  bk::XamInputLock lock(bk::xam_input_mutex);
   if (!vib || percent == 100) {
     __imp__sub_8220C2D8(ctx, base);
     return;
@@ -166,4 +179,10 @@ REX_HOOK_RAW(sub_8220C2D8) {
   __imp__sub_8220C2D8(ctx, base);
   bk::Store16(base, vib, left);  // the game's own values back
   bk::Store16(base, vib + 2, right);
+}
+
+REX_EXTERN(__imp__sub_8220C2F0);
+REX_HOOK_RAW(sub_8220C2F0) {
+  bk::XamInputLock lock(bk::xam_input_mutex);
+  __imp__sub_8220C2F0(ctx, base);
 }
