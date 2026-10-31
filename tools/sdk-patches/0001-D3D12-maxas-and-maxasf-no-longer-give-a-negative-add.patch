@@ -1,0 +1,29 @@
+From 6cfa206f14da6856f85f510ea4ffcdd530ea1914 Mon Sep 17 00:00:00 2001
+From: TekRantGaming <craigferels896@gmail.com>
+Date: Sat, 31 Oct 2026 22:27:53 +0000
+Subject: [PATCH] D3D12: maxas and maxasf no longer give a negative address
+
+A negative a0 from these opcodes hangs AMD GPUs (DEVICE_HUNG, crashes within seconds on the RX 6000 series and
+on newer drivers for 7000 and 9000). Clamp at 0 instead of -256, as Xenia Canary does since 674870d88.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/graphics/pipeline/shader/dxbc_translator_alu.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/graphics/pipeline/shader/dxbc_translator_alu.cpp b/src/graphics/pipeline/shader/dxbc_translator_alu.cpp
+index 66834e5..fc8fe21 100644
+--- a/src/graphics/pipeline/shader/dxbc_translator_alu.cpp
++++ b/src/graphics/pipeline/shader/dxbc_translator_alu.cpp
+@@ -780,8 +780,10 @@ void DxbcShaderTranslator::ProcessScalarAluOperation(
+         a_.OpRoundNI(dxbc::Dest::R(system_temp_ps_pc_p0_a0_, 0b1000),
+                      dxbc::Src::R(system_temp_ps_pc_p0_a0_, dxbc::Src::kWWWW));
+       }
++      // Not -256: a negative address hangs AMD GPUs ("Graphics lost" on the 6000 series and on newer drivers for
++      // 7000 and 9000), Xenia Canary 674870d88.
+       a_.OpMax(dxbc::Dest::R(system_temp_ps_pc_p0_a0_, 0b1000),
+-               dxbc::Src::R(system_temp_ps_pc_p0_a0_, dxbc::Src::kWWWW), dxbc::Src::LF(-256.0f));
++               dxbc::Src::R(system_temp_ps_pc_p0_a0_, dxbc::Src::kWWWW), dxbc::Src::LF(0.0f));
+       a_.OpMin(dxbc::Dest::R(system_temp_ps_pc_p0_a0_, 0b1000),
+                dxbc::Src::R(system_temp_ps_pc_p0_a0_, dxbc::Src::kWWWW), dxbc::Src::LF(255.0f));
+       a_.OpFToI(dxbc::Dest::R(system_temp_ps_pc_p0_a0_, 0b1000),

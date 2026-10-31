@@ -63,6 +63,9 @@ one AppImage (the launcher starts each game from beside itself), with Noto Sans 
 into the release's `SHA256SUMS.txt` beside the zips, and the AppImage goes on both releases: the one players see and
 the packages release the launcher updates itself from.
 
+`tools/sdk-patches` holds the SDK changes every build needs on top of that SDK: apply them to its source and rebuild
+it. The patch there stops Direct3D 12 shaders giving a negative address, which hangs AMD graphics cards.
+
 `tools/linux/sdk-patches` holds the SDK changes the Linux build needs on top of that SDK: apply them to its source and
 rebuild it before building the games. Patch 0013 stops an installed RenderDoc from starting inside the games, which
 shows players its "Capturing Vulkan" overlay.
