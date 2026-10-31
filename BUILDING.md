@@ -62,3 +62,7 @@ The last one writes `dist\linux\WhoppingCollection-v1.0.0-linux-x86_64.AppImage`
 one AppImage (the launcher starts each game from beside itself), with Noto Sans (OFL) for the launcher. Its line goes
 into the release's `SHA256SUMS.txt` beside the zips, and the AppImage goes on both releases: the one players see and
 the packages release the launcher updates itself from.
+
+`tools/linux/sdk-patches` holds the SDK changes the Linux build needs on top of that SDK: apply them to its source and
+rebuild it before building the games. Patch 0013 stops an installed RenderDoc from starting inside the games, which
+shows players its "Capturing Vulkan" overlay.
